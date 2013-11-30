@@ -9,6 +9,7 @@ MongoClient.connect("mongodb://" + settings.host + ':' + settings.port + '/' + s
 		return console.log(err);
 	db = getdb;
 });
+
 user_service.saveUser = function(user, callback) {
     //读取 users 集合
     db.collection('users', function (err, collection) {

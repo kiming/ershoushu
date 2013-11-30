@@ -75,4 +75,10 @@ module.exports = function(app) {
             return res.end(JSON.stringify({result: 1, data: {msg: '可用的email'}}));
         });
     });
+
+    app.post('/upload/picture', function(req, res){
+        for (var i in req.files) {
+            if (req.files.size == 0)
+        }
+    });
 };
