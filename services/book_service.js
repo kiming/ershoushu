@@ -7,3 +7,7 @@ MongoClient.connect("mongodb://" + settings.host + ':' + settings.port + '/' + s
 		return console.log(err);
 	db = getdb;
 });
+
+book_service.saveBook = function(book, callback) {
+
+};

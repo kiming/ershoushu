@@ -10,4 +10,3 @@ MongoClient.connect("mongodb://" + settings.host + ':' + settings.port + '/' + s
 	db = getdb;
 });
 
-

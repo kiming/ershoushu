@@ -1,6 +1,8 @@
 var book_service = require('../services/book_service');
 
 function Book(book) {
+	this.bid;
+	this.owner = book.owner;
 	this.isbn = book.isbn;
 	this.name = book.name;//书名
 	this.author = book.author;//作者
@@ -8,8 +10,10 @@ function Book(book) {
 	this.pages = book.pages;
 	this.price = book.price;
 	this.brief = book.brief;//简介
-	this.shelfTime = new Date();
-	this.pics;//
+	this.shelfTime = (new Date()).getTime();//创建时间
+	this.borrowable = book.borrowable;//true拥有者愿意出借此书, false不愿意
+	this.available;//true书已经出借，false书暂未出借
+	this.pics;
 };
 
 module.exports = Book;
