@@ -14,25 +14,30 @@ user_service.saveUser = function(user, callback) {
     //读取 users 集合
     db.collection('users', function (err, collection) {
     	if (err) {
-        	mongodb.close();
+        	db.close();
         	return callback(err);//错误，返回 err 信息
     	}
     	db.collection('indices', function(err, indice_coll){
     		indice_coll.findOne({type: 'user'}, function(err, out){
-    			if (err)
+    			if (err) {
+    				db.close();
     				return callback(err);
+    			}
     			user.uid = out.id;
     			//将用户数据插入 users 集合
     			collection.insert(user, {
         			safe: true
-      			}, function (err, user) {
+      			}, function (err, db_user) {
         			if (err) {
+        				db.close();
         				return callback(err);
         			}
         			indice_coll.update({type: 'user'}, {$inc: {id: 1}}, function(err, result){
-        				if (err)
+        				if (err) {
+        					db.close();
         					return callback(err);
-        				callback(null, user[0]);//成功！err 为 null，并返回存储后的用户文档
+        				}
+        				callback(null, db_user[0]);//成功！err 为 null，并返回存储后的用户文档
         			});
     			});
     		});		
@@ -67,7 +72,6 @@ user_service.getUserByEmailAndPassword = function(email, password, callback) {
 			if (err)
 				return callback(err);
 			callback(null, user);
-
 		});
 	});
 };

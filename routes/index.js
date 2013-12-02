@@ -14,25 +14,41 @@ module.exports = function(app) {
             return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入密码'}}));
     	var email = req.body.email,
     		nickname = req.body.nickname,
-    		password = require('crypto').createHash('md5').update(req.body.password).digest('hex');
+    		password = require('crypto').createHash('md5').update(req.body.password).digest('hex'),
+            address = req.body.address,
+            zipcode = req.body.zipcode,
+            zip = parseInt(zipcode),
+            tel = req.body.tel,
+            mobile = req.body.mobile;
         if (!email)
             return res.end(JSON.stringify({result: 0, data: {err: 2, msg: '没有输入email'}}));
         if (!nickname)
-            return res.end(JSON.stringify({result: 0, data: {err: 3, msg: '没有输入nickname'}}));
+            return res.end(JSON.stringify({result: 0, data: {err: 3, msg: '没有输入昵称'}}));
+        if (!address)
+            return res.end(JSON.stringify({result: 0, data: {err: 4, msg: '没有输入地址'}}));
+        if (!zipcode)
+            return res.end(JSON.stringify({result: 0, data: {err: 5, msg: '没有输入邮编'}}));
+        if (isNaN(zip) || zip < 100000 || zip > 999999)
+            return res.end(JSON.stringify({result: 0, data: {err: 6, msg: '邮编不是有效数字'}}));
+        if (!tel && !mobile)
+            return res.end(JSON.stringify({result: 0, data: {err: 7, msg: '电话和手机至少需要填一项！'}}));
     	var newUser = new User({
     		email: email,
     		nickname: nickname,
-    		password: password
+    		password: password,
+            address: address,
+            zipcode: zip,
+            contact: {tel: tel, mobile: mobile}
     	});
 
     	User.getUser(req.body.email, function(err, user){
     		if (err)
-    			return res.end(JSON.stringify({result: 0, data: {err: 4, msg: err}}));
+    			return res.end(JSON.stringify({result: 0, data: {err: 8, msg: err}}));
     		if (user)
-    			return res.end(JSON.stringify({result: 0, data: {err: 5, msg: "邮箱已存在"}}));
+    			return res.end(JSON.stringify({result: 0, data: {err: 9, msg: "邮箱已存在"}}));
     		newUser.save(function(err, user) {
     			if (err)
-    				return res.end(JSON.stringify({result: 0, data: {err: 6, msg: err}}));
+    				return res.end(JSON.stringify({result: 0, data: {err: 10, msg: err}}));
     			req.session.user = user;
                 //console.log(user);
     			return res.end(JSON.stringify({result:1, data: {msg:"注册成功！"}}), 'utf8');
@@ -113,5 +129,24 @@ module.exports = function(app) {
             return res.end(JSON.stringify({result: 0, data: {err: 5, msg: '价格输入不合法'}}));
         if (!req.body.brief)
             return res.end(JSON.stringify({result: 0, data: {err: 6, msg: '没有输入简介'}}));
+        var newBook = new Book({
+            owner: req.body.owner,
+            isbn: req.body.isbn,
+            bookname: req.body.bookname,
+            author: req.body.author,
+            publishDate: parseInt(req.body.publishDate),//前台传过来的应该是从1970年1月1日起过的毫秒值
+            pages: parseInt(req.body.pages),
+            price: parseInt(req.body.price),
+            brief: req.body.brief,
+            borrowable: parseInt(req.body.borrowable) == 1,//1则true/愿意借,false不愿意借
+            pics: JSON.parse(req.body.pics)//必须是一个JSON.stringify过的数组，即使是空的
+        });
+
+        newBook.save(function(err, book){
+            if(err)
+                return res.end(JSON.stringify({result: 0, data: {err: 11, msg: err}}));
+            return res.end(JSON.stringify({result: 1, data: {book: book}}));
+        });
+
     });
 };
