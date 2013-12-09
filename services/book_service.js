@@ -11,13 +11,11 @@ MongoClient.connect("mongodb://" + settings.host + ':' + settings.port + '/' + s
 book_service.saveBook = function(book, callback) {
 	db.collection('books', function(err, collection){
 		if(err) {
-			db.close();
 			return callback(err);
 		}
 		db.collection('indices', function(err, indice_coll){
 			indice_coll.findOne({type: 'book'}, function(err, out){
 				if (err) {
-					db.close();
     				return callback(err);
     			}
     			book.bid = out.id;
@@ -26,12 +24,10 @@ book_service.saveBook = function(book, callback) {
     				safe: true
     			}, function(err, db_book){
     				if (err) {
-    					db.close();
     					return callback(err);
     				}
     				indice_coll.update({type: 'book'}, {$inc: {id: 1}}, function(err, result){
         				if (err) {
-        					db.close();
         					return callback(err);
         				}
         				callback(null, db_book[0]);//成功！err 为 null，并返回存储后的用户文档
@@ -40,4 +36,41 @@ book_service.saveBook = function(book, callback) {
 			});
 		});
 	});
+};
+
+book_service.getBookByBid = function(bid, callback) {
+    db.collection('books', function(err, collection){
+        if (err) {
+            return callback(err);
+        }
+        collection.findOne({bid: bid}, function(err, book){
+            if (err) {
+                return callback(err);
+            }
+            return callback(null, book);
+        });
+
+    });
+};
+
+book_service.modifyBookByBid = function(bid, book, callback) {
+    db.collection('books', function(err, collection) {
+        if (err)
+            return callback(err);
+        collection.update({bid: bid}, {'$set': {
+            isbn: book.isbn,
+            bookname: book.bookname,
+            author: book.author,
+            publishDate: book.publishDate,
+            pages: book.pages,
+            price: book.price,
+            brief: book.brief,
+            borrowable: book.borrowable,
+            pics: book.pics
+        }}, function(err, book){
+            if (err)
+                return callback(err);
+            return callback(err, book);
+        });
+    });
 };

@@ -1,5 +1,6 @@
 ﻿var User = require('../models/user');
-var file_service = require('../services/file_service')
+var Book = require('../models/book');
+var file_service = require('../services/file_service');
 
 module.exports = function(app) {
     app.get('/', function(req, res){
@@ -117,7 +118,7 @@ module.exports = function(app) {
 
     app.post('/create/book', function(req, res){
         res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
-        if (!req.body.name)
+        if (!req.body.bookname)
             return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入书名'}}));
         if (!req.body.pages)
             return res.end(JSON.stringify({result: 0, data: {err: 2, msg: '没有输入页数'}}));
@@ -125,18 +126,18 @@ module.exports = function(app) {
             return res.end(JSON.stringify({result: 0, data: {err: 3, msg: '页数输入不合法'}}));
         if (!req.body.price)
             return res.end(JSON.stringify({result: 0, data: {err: 4, msg: '没有输入价格'}}));
-        if (isNaN(parseInt(req.body.price)))
+        if (isNaN(parseFloat(req.body.price)))
             return res.end(JSON.stringify({result: 0, data: {err: 5, msg: '价格输入不合法'}}));
         if (!req.body.brief)
             return res.end(JSON.stringify({result: 0, data: {err: 6, msg: '没有输入简介'}}));
         var newBook = new Book({
-            owner: req.body.owner,
+            owner: req.session.user.uid,
             isbn: req.body.isbn,
             bookname: req.body.bookname,
             author: req.body.author,
             publishDate: parseInt(req.body.publishDate),//前台传过来的应该是从1970年1月1日起过的毫秒值
             pages: parseInt(req.body.pages),
-            price: parseInt(req.body.price),
+            price: parseFloat(req.body.price),
             brief: req.body.brief,
             borrowable: parseInt(req.body.borrowable) == 1,//1则true/愿意借,false不愿意借
             pics: JSON.parse(req.body.pics)//必须是一个JSON.stringify过的数组，即使是空的
@@ -149,4 +150,72 @@ module.exports = function(app) {
         });
 
     });
+
+    //For test only
+    app.get('/test/newbook', function(req, res){
+        res.render('testbook');
+    });
+    
+    app.get('/get/book', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        var bid = req.query.bid;
+        if (!bid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入Book ID'}}));
+        bid = parseInt(bid);
+        if (isNaN(bid))
+            return res.end(JSON.stringify({result: 0, data: {err: 2, msg: '输入Book ID不是有效id'}}));
+        Book.getBook(bid, function(err, book) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 3, msg: '连接错误'}}));
+            if (!book)
+                return res.end(JSON.stringify({result: 0, data: {err: 4, msg: '没有查找到该图书'}}));
+            return res.end(JSON.stringify({result: 1, data: {book: book}}));
+        });
+    });
+
+    app.post('/modify/book', function(req, res){
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.body.bookname)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入书名'}}));
+        if (!req.body.pages)
+            return res.end(JSON.stringify({result: 0, data: {err: 2, msg: '没有输入页数'}}));
+        if (isNaN(parseInt(req.body.pages)))
+            return res.end(JSON.stringify({result: 0, data: {err: 3, msg: '页数输入不合法'}}));
+        if (!req.body.price)
+            return res.end(JSON.stringify({result: 0, data: {err: 4, msg: '没有输入价格'}}));
+        if (isNaN(parseFloat(req.body.price)))
+            return res.end(JSON.stringify({result: 0, data: {err: 5, msg: '价格输入不合法'}}));
+        if (!req.body.brief)
+            return res.end(JSON.stringify({result: 0, data: {err: 6, msg: '没有输入简介'}}));
+        if (!req.body.bid)
+            return res.end(JSON.stringify({result: 0, data: {err: 7, msg: '没有传入书的ID'}}));
+        var bid = parseInt(req.body.bid);
+        var book = {
+            isbn: req.body.isbn,
+            bookname: req.body.bookname,
+            author: req.body.author,
+            publishDate: parseInt(req.body.publishDate),//前台传过来的应该是从1970年1月1日起过的毫秒值
+            pages: parseInt(req.body.pages),
+            price: parseFloat(req.body.price),
+            brief: req.body.brief,
+            borrowable: parseInt(req.body.borrowable) == 1,//1则true/愿意借,false不愿意借
+            pics: JSON.parse(req.body.pics)//必须是一个JSON.stringify过的数组，即使是空的
+        };
+        Book.modifyBook(bid, book, function(err, book){
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 11, msg: '连接错误'}}));
+            if (!book)
+                return res.end(JSON.stringify({result: 0, data: {err: 12, msg: '该图书不存在！'}}));
+            return res.end(JSON.stringify({result: 1, data: {book: book}}));
+        });
+    });
+    
+    //创建订单
+    app.post('/create/order', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        
+    });
+
+    
+
 };
