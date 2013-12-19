@@ -14,10 +14,11 @@ book_service.saveBook = function(book, callback) {
 			return callback(err);
 		}
 		db.collection('indices', function(err, indice_coll){
+            if (err)
+                return callback(err);
 			indice_coll.findOne({type: 'book'}, function(err, out){
-				if (err) {
+				if (err)
     				return callback(err);
-    			}
     			book.bid = out.id;
 
     			collection.insert(book, {
@@ -67,10 +68,31 @@ book_service.modifyBookByBid = function(bid, book, callback) {
             brief: book.brief,
             borrowable: book.borrowable,
             pics: book.pics
-        }}, function(err, book){
+        }}, function(err, updated_book){
             if (err)
                 return callback(err);
-            return callback(err, book);
+            if (!updated_book)
+                return callback(-1);
+            return callback(err, updated_book[0]);
+        });
+    });
+};
+
+book_service.checkExistAndOwner = function(bid, callback){
+    db.collection('books', function(err, collection) {
+        if (err)
+            return callback(err);
+        collection.findOne({bid: bid}, function(err, book) {
+            if (err)
+                return callback(err);
+            if (!book)
+                return callback(null, {exist: false});
+            return callback(null, {
+                exist: true,
+                be: book.borrowable,
+                ae: book.available,
+                oid: book.owner
+            });
         });
     });
 };

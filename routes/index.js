@@ -1,5 +1,6 @@
 ﻿var User = require('../models/user');
 var Book = require('../models/book');
+var Transaction = require('../models/transaction')
 var file_service = require('../services/file_service');
 
 module.exports = function(app) {
@@ -190,32 +191,90 @@ module.exports = function(app) {
         if (!req.body.bid)
             return res.end(JSON.stringify({result: 0, data: {err: 7, msg: '没有传入书的ID'}}));
         var bid = parseInt(req.body.bid);
-        var book = {
-            isbn: req.body.isbn,
-            bookname: req.body.bookname,
-            author: req.body.author,
-            publishDate: parseInt(req.body.publishDate),//前台传过来的应该是从1970年1月1日起过的毫秒值
-            pages: parseInt(req.body.pages),
-            price: parseFloat(req.body.price),
-            brief: req.body.brief,
-            borrowable: parseInt(req.body.borrowable) == 1,//1则true/愿意借,false不愿意借
-            pics: JSON.parse(req.body.pics)//必须是一个JSON.stringify过的数组，即使是空的
-        };
-        Book.modifyBook(bid, book, function(err, book){
+        //书借出去以后是不允许修改的
+        Book.getBook(bid, function(err, bk) {
             if (err)
-                return res.end(JSON.stringify({result: 0, data: {err: 11, msg: '连接错误'}}));
-            if (!book)
-                return res.end(JSON.stringify({result: 0, data: {err: 12, msg: '该图书不存在！'}}));
-            return res.end(JSON.stringify({result: 1, data: {book: book}}));
+                return res.end(JSON.stringify({result: 0, data: {err: 8, msg: '连接错误'}}));
+            if (!bk)
+                return res.end(JSON.stringify({result: 0, data: {err: 9, msg: '该图书不存在！'}}));
+            if (!bk.available)
+                return res.end(JSON.stringify({result: 0, data: {err: 10, msg: '书已借出，不能修改！'}}));
+
+            var book = {
+                isbn: req.body.isbn,
+                bookname: req.body.bookname,
+                author: req.body.author,
+                publishDate: parseInt(req.body.publishDate),//前台传过来的应该是从1970年1月1日起过的毫秒值
+                pages: parseInt(req.body.pages),
+                price: parseFloat(req.body.price),
+                brief: req.body.brief,
+                borrowable: parseInt(req.body.borrowable) == 1,//1则true/愿意借,false不愿意借
+                pics: JSON.parse(req.body.pics)//必须是一个JSON.stringify过的数组，即使是空的
+            };
+            Book.modifyBook(bid, book, function(err, updated_book){
+                if (err)
+                    return res.end(JSON.stringify({result: 0, data: {err: 11, msg: '连接错误'}}));
+                if (!updated_book)
+                    return res.end(JSON.stringify({result: 0, data: {err: 12, msg: '该图书不存在！'}}));
+                return res.end(JSON.stringify({result: 1, data: {book: updated_book}}));
+            });
         });
+    });
+
+    app.get('/remove/book', function(req, res){
+        //判断书的所有者才能移除这本书
     });
     
     //创建订单
-    app.post('/create/order', function(req, res) {
+    app.post('/order/create', function(req, res) {
         res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
-        
+        var bid = req.query.bid;
+        if(!bid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有图书号参数'}}));
+        if (isNaN(bid))
+            return res.end(JSON.stringify({result: 0, data: {err: 2, msg: '图书号参数不正确'}}));
+        bid = parseInt(bid);
+        Book.checkExistAndOwner(bid, function(err, obj){
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 3, msg: '连接错误'}}));
+            if (!obj.exist)
+                return res.end(JSON.stringify({result: 0, data: {err: 4, msg: '该图书根本就不存在嘛'}}));
+            var oid = obj.oid;
+            if (oid == req.session.user.uid)
+                return res.end(JSON.stringify({result: 0, data: {err: 5, msg: '你疯啦！自己借自己的书'}}));
+            if (!obj.be)
+                return res.end(JSON.stringify({result: 0, data: {err: 6, msg: '这本书已设置了不允许外借'}}));
+            if (!obj.ae)
+                return res.end(JSON.stringify({result: 0, data: {err: 7, msg: '这本书已出借'}}));
+            var order = {
+                borrower: req.session.uid,
+                bid: bid
+            };
+            var tran = new Transaction(order);
+            tran.save(function(err, transaction) {
+                if (err)
+                    return res.end(JSON.stringify({result: 0, data: {err: 8, msg: '该图书根本就不存在嘛'}}));
+                if (!transaction)
+                    return res.end(JSON.stringify({result: 0, data: {err: 9, msg: '该订单未成功生成，请重试'}}));
+
+                return res.end(JSON.stringify({result: 1, data: {transaction: transaction}}));
+            });
+        });
+    });
+    
+    //订单要得到lender，即出借这本书的人的确认
+    //参数1:订单号
+    app.get('/order/confirm', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        //判断是否登录
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        //判断订单号是否合法
+
     });
 
-    
-
+    //图书拥有者不愿意接受这个订单
+    app.get('/order/refuse', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+    });
 };

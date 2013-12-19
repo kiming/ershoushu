@@ -14,13 +14,11 @@ user_service.saveUser = function(user, callback) {
     //读取 users 集合
     db.collection('users', function (err, collection) {
     	if (err) {
-        	db.close();
         	return callback(err);//错误，返回 err 信息
     	}
     	db.collection('indices', function(err, indice_coll){
     		indice_coll.findOne({type: 'user'}, function(err, out){
     			if (err) {
-    				db.close();
     				return callback(err);
     			}
     			user.uid = out.id;
@@ -29,12 +27,10 @@ user_service.saveUser = function(user, callback) {
         			safe: true
       			}, function (err, db_user) {
         			if (err) {
-        				db.close();
         				return callback(err);
         			}
         			indice_coll.update({type: 'user'}, {$inc: {id: 1}}, function(err, result){
         				if (err) {
-        					db.close();
         					return callback(err);
         				}
         				callback(null, db_user[0]);//成功！err 为 null，并返回存储后的用户文档

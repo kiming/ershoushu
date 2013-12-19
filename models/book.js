@@ -29,3 +29,11 @@ Book.getBook = function(bid, callback) {
 Book.modifyBook = function(bid, book, callback) {
 	book_service.modifyBookByBid(bid, book, callback);
 }
+
+Book.checkExistAndOwner = function(bid, callback) {
+	book_service.checkExistAndOwner(bid, callback);
+};
+
+Book.changeAvailableFlag = function(flag, bid, callback) {
+	
+};
