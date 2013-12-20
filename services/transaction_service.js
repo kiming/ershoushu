@@ -1,4 +1,4 @@
-var transation_service = exports;
+var transaction_service = exports;
 //var mongodb = require('../models/db');
 var MongoClient = require('mongodb').MongoClient;
 var settings = require('../settings');
@@ -17,7 +17,7 @@ transaction_service.createTransaction = function(order, callback) {
 		db.collection('indices', function(err, indice_coll) {
 			if (err)
 				return callback(err);
-			indice_coll.findOne({type: 'book'}, function(err, out){
+			indice_coll.findOne({type: 'order'}, function(err, out){
 				if (err)
 					return callback(err);
 				order.tid = out.id;
@@ -54,12 +54,74 @@ transaction_service.getTransactionByTid = function(tid, callback) {
 
 transaction_service.updateTransactionByOwnerPermit = function(tid, callback) {
 	db.collection('orders', function(err, collection) {
-		collection.update({tid: tid}, {$set: {status: 2}}, function(err, result) {
+		var time = (new Date()).getTime() + 2592000000;
+		collection.update({tid: tid}, {$set: {status: 2, endTime: time}}, function(err, result) {
 			if (err)
 				return callback(err);
 			if (!result)
 				return callback(-1);
-			return callback(err, result[0]);
+			return callback(err, true);
+		});
+	});
+};
+
+transaction_service.checkDupOrder = function(uid, bid, callback) {
+	db.collection('orders', function(err, collection) {
+		collection.findOne({ber: uid, bid: bid}, function(err, one) {
+			if (err)
+				return callback(err);
+			if (one)
+				return callback(null, true);
+			return callback(null, false);
+		});
+	});
+};
+
+transaction_service.cancelOther = function(uid, bid, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		collection.update({bid: bid, ber: {$ne: uid}, status: 1}, {$set: {status: -2}}, function(err, result) {
+			if (err)
+				return callback(err);
+			return callback(null, true);
+		});
+	});
+};
+
+transaction_service.denyTransaction = function(tid, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		collection.update({tid: tid}, {$set: {status: -2}}, function(err, result) {
+			if (err)
+				return callback(err);
+			return callback(null, true);
+		});
+	});
+};
+
+transaction_service.cancelTransaction = function(tid, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		collection.update({tid: tid}, {$set: {status: -1}}, function(err, result) {
+			if (err)
+				return callback(err);
+			return callback(null, true);
+		});
+	});
+};
+
+transaction_service.returnBook = function(tid, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		var time = (new Date()).getTime();
+		collection.update({tid: tid}, {$set: {status: 3, returnTime: time}}, function(err, result) {
+			if (err)
+				return callback(err);
+			return callback(null, result);
 		});
 	});
 };

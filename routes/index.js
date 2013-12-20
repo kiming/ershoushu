@@ -4,6 +4,10 @@ var Transaction = require('../models/transaction')
 var file_service = require('../services/file_service');
 
 module.exports = function(app) {
+    app.get('/ordertest', function(req, res) {
+        return res.render('order_test');
+    });
+
     app.get('/', function(req, res){
         res.render('index.ejs', {
             title: "跑起来了吧"
@@ -211,11 +215,11 @@ module.exports = function(app) {
                 borrowable: parseInt(req.body.borrowable) == 1,//1则true/愿意借,false不愿意借
                 pics: JSON.parse(req.body.pics)//必须是一个JSON.stringify过的数组，即使是空的
             };
-            Book.modifyBook(bid, book, function(err, updated_book){
+            Book.modifyBook(bid, book, function(err, flag){
                 if (err)
                     return res.end(JSON.stringify({result: 0, data: {err: 11, msg: '连接错误'}}));
-                if (!updated_book)
-                    return res.end(JSON.stringify({result: 0, data: {err: 12, msg: '该图书不存在！'}}));
+                if (flag == 0)
+                    return res.end(JSON.stringify({result: 0, data: {err: 12, msg: '修改失败'}}));
                 return res.end(JSON.stringify({result: 1, data: {book: updated_book}}));
             });
         });
@@ -226,9 +230,12 @@ module.exports = function(app) {
     });
     
     //创建订单
+    //需要参数: bid  
     app.post('/order/create', function(req, res) {
         res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
-        var bid = req.query.bid;
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        var bid = req.body.bid;
         if(!bid)
             return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有图书号参数'}}));
         if (isNaN(bid))
@@ -246,18 +253,25 @@ module.exports = function(app) {
                 return res.end(JSON.stringify({result: 0, data: {err: 6, msg: '这本书已设置了不允许外借'}}));
             if (!obj.ae)
                 return res.end(JSON.stringify({result: 0, data: {err: 7, msg: '这本书已出借'}}));
-            var order = {
-                borrower: req.session.uid,
-                bid: bid
-            };
-            var tran = new Transaction(order);
-            tran.save(function(err, transaction) {
-                if (err)
-                    return res.end(JSON.stringify({result: 0, data: {err: 8, msg: '该图书根本就不存在嘛'}}));
-                if (!transaction)
-                    return res.end(JSON.stringify({result: 0, data: {err: 9, msg: '该订单未成功生成，请重试'}}));
 
-                return res.end(JSON.stringify({result: 1, data: {transaction: transaction}}));
+            Transaction.checkDupOrder(req.session.user.uid, bid, function(err, flag) {
+                if (err)
+                    return res.end(JSON.stringify({result: 0, data: {err: 10, msg: '连接问题'}}));
+                if (flag)
+                    return res.end(JSON.stringify({result: 0, data: {err: 11, msg: '请不要重复下订单！'}}));
+
+                var order = {
+                    borrower: req.session.user.uid,
+                    bid: bid
+                };
+                var tran = new Transaction(order);
+                tran.save(function(err, transaction) {
+                    if (err)
+                        return res.end(JSON.stringify({result: 0, data: {err: 8, msg: '该图书根本就不存在嘛'}}));
+                    if (!transaction)
+                        return res.end(JSON.stringify({result: 0, data: {err: 9, msg: '该订单未成功生成，请重试'}}));
+                    return res.end(JSON.stringify({result: 1, data: {transaction: transaction}}));
+                });
             });
         });
     });
@@ -269,12 +283,70 @@ module.exports = function(app) {
         //判断是否登录
         if (!req.session.user)
             return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
-        //判断订单号是否合法
-
+        if (!req.query.tid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入订单号'}}));
+        var tid = parseInt(req.query.tid);
+        if (isNaN(tid))
+            return res.end(JSON.stringify({result: 0, data: {err: 31, msg: '订单号不合法'}}));
+        Transaction.ConfirmTransaction(req.session.user.uid, tid, function(err, flag) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: err}));
+            Transaction.getTransactionByTid(tid, function(err, tran) {
+                if (err)
+                    return res.end(JSON.stringify({result: 0, data: {err: 32, msg: '连接错误'}}));
+                return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+            });
+        });
     });
 
     //图书拥有者不愿意接受这个订单
     app.get('/order/refuse', function(req, res) {
         res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        if (!req.query.tid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入订单号'}}));
+        var tid = parseInt(req.query.tid);
+        if (isNaN(tid))
+            return res.end(JSON.stringify({result: 0, data: {err: 31, msg: '订单号不合法'}}));
+        Transaction.refuseTransaction(req.session.user.uid, tid, function(err, tran) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: err}));
+            return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+        });
+    });
+
+    app.get('/order/cancel', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        if (!req.query.tid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入订单号'}}));
+        var tid = parseInt(req.query.tid);
+        if (isNaN(tid))
+            return res.end(JSON.stringify({result: 0, data: {err: 31, msg: '订单号不合法'}}));
+
+        Transaction.calcelTransaction(req.session.user.uid, tid, function(err, tran) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: err}));
+            return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+        });
+    });
+
+    //还书，其实只是拥有者拿回书后拥有者确认
+    app.get('/order/return', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        if (!req.query.tid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入订单号'}}));
+        var tid = parseInt(req.query.tid);
+        if (isNaN(tid))
+            return res.end(JSON.stringify({result: 0, data: {err: 31, msg: '订单号不合法'}}));
+        Transaction.returnBook(req.session.user.uid, tid, function(err, tran) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: err}));
+             return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+        });
     });
 };

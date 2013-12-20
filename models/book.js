@@ -34,6 +34,40 @@ Book.checkExistAndOwner = function(bid, callback) {
 	book_service.checkExistAndOwner(bid, callback);
 };
 
-Book.changeAvailableFlag = function(flag, bid, callback) {
-	
+Book.occupyBook = function(bid, callback) {
+	Book.getBook(bid, function(err, book) {
+		if (err)
+			return callback({err: 20, msg: '连接问题'});
+		if (!book)
+			return callback({err: 21, msg: '图书不存在'});
+		if (!book.available)
+			return callback({err: 22, msg: '图书已借出'});
+
+		book_service.changeAvailableFlag(false, bid, function(err, mark){
+			if (err)
+				return callback({err: 23, msg: '连接问题'});
+			if (mark == 0)
+				return callback({err: 24, msg: '图书不可借'});
+			return callback(null, true);
+		});
+	});
+};
+
+Book.releaseBook = function(bid, callback) {
+	Book.getBook(bid, function(err, book) {
+		if (err)
+			return callback({err: 20, msg: '连接问题'});
+		if (!book)
+			return callback({err: 21, msg: '图书不存在'});
+		if (book.available)
+			return callback({err: 22, msg: '该图书早已归还'});
+
+		book_service.changeAvailableFlag(true, bid, function(err, mark) {
+			if (err)
+				return callback({err: 23, msg: '连接问题'});
+			if (mark == 0)
+				return callback({err: 24, msg: '图书不可归还'});
+			return callback(null, true);
+		});
+	});
 };

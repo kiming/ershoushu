@@ -68,12 +68,10 @@ book_service.modifyBookByBid = function(bid, book, callback) {
             brief: book.brief,
             borrowable: book.borrowable,
             pics: book.pics
-        }}, function(err, updated_book){
+        }}, function(err, num){
             if (err)
                 return callback(err);
-            if (!updated_book)
-                return callback(-1);
-            return callback(err, updated_book[0]);
+            return callback(null, num);
         });
     });
 };
@@ -93,6 +91,18 @@ book_service.checkExistAndOwner = function(bid, callback){
                 ae: book.available,
                 oid: book.owner
             });
+        });
+    });
+};
+
+book_service.changeAvailableFlag = function(flag, bid, callback) {
+    db.collection('books', function(err, collection) {
+        if (err)
+            return callback(err);
+        collection.update({bid: bid}, {$set: {available: flag}}, function(err, mark) {
+            if (err)
+                return callback(err);
+            return callback(null, mark);
         });
     });
 };
