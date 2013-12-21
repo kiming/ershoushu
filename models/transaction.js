@@ -1,13 +1,14 @@
 
 var transaction_service = require('../services/transaction_service');
+var book_service = require('../services/book_service');
 var Book = require('./book');
 
 function Transaction(trans) {
 	this.tid;//订单号
 	this.ber = trans.borrower;//请求这本书的人
 	this.bid = trans.bid;//图书的id
-	this.comment1 = null;//borrower的评论
-	this.comment2 = null;//lender的评论
+	this.comment1 = null;//拥有者的评论
+	this.comment2 = null;//借阅者的评论
 /*
  * 评论示例:
  * {time: 时间戳, content: 内容}
@@ -179,6 +180,116 @@ Transaction.returnBook = function(uid, tid, callback) {
 	});
 };
 
-Transaction.OwnerComment = function() {
+Transaction.OwnerComment = function(uid, tid, comment, callback) {
+	transaction_service.getTransactionByTid(tid, function(err, tran) {
+		if (err)
+			return callback({err: 2, msg: '查询图书时连接错误'});
+		if (!tran)
+			return callback({err: 3, msg: '该订单不存在'});
+		if (tran.status != 3)
+			return callback({err: 4, msg: '该订单不处于可以评论的状态'});
+		if (tran.comment1)
+			return callback({err: 5, msg: '您已评论过，无需再进行评论'});
+		Book.getBook(tran.bid, function(err, book) {
+			if (err)
+				return callback({err: 7, msg: '查询图书时连接错误'});
+			if (!book)
+				return callback({err: 8, msg: '该图书不存在'});
+			if (book.owner != uid)
+				return callback({err: 9, msg: '您无权访问此资源！请刷新后重试！'});
+			transaction_service.commentTransaction(true, tid, comment, function(err, flag1) {
+				if (err)
+					return callback({err: 11, msg: '连接出现错误'});
+				if (flag == 0)
+					return callback({err: 12, msg: '更新没有成功'});
+				transaction_service.getTransactionByTid(tid, function(err, newtran1) {
+					if (err)
+						return callback({err: 21, msg: '连接出现错误'});
+					if (!newtran)
+						return callback({err: 22, msg: '订单神秘消失，详情请收看走进科学'});
+					if (newtran.comment1 && newtran.comment2) {
+						transaction_service.finishTransaction(tid, function(err, flag2) {
+							if (err)
+								return callback({err: 31, msg: '连接出现错误'});
+							if (flag == 0)
+								return callback({err: 32, msg: '更新没有成功'});
+							transaction_service.getTransactionByTid(tid, function(err, newtran2) {
+								if (err)
+									return callback({err: 41, msg: '连接出现错误'});
+								if (!newtran2)
+									return callback({err: 42, msg: '订单神秘消失，详情请收看走进科学'});
+								return callback(null, newtran2);
+							});
+						});
+					}
+					else
+						return callback(null, newtran1);
+				});
+			});
+		});
+	});
+};
 
+Transaction.ReaderComment = function(uid, tid, comment, callback) {
+	transaction_service.getTransactionByTid(tid, function(err, tran) {
+		if (err)
+			return callback({err: 2, msg: '查询图书时连接错误'});
+		if (!tran)
+			return callback({err: 3, msg: '该订单不存在'});
+		if (tran.status != 3)
+			return callback({err: 4, msg: '该订单不处于可以评论的状态'});
+		if (tran.comment2)
+			return callback({err: 5, msg: '您已评论过，无需再进行评论'});
+		if (tran.ber != uid)
+			return callback({err: 6, msg: '您无权访问此资源！请刷新后重试！'});
+		transaction_service.commentTransaction(false, tid, comment, function(err, flag1) {
+			if (err)
+				return callback({err: 11, msg: '连接出现错误'});
+			if (flag == 0)
+				return callback({err: 12, msg: '更新没有成功'});
+			transaction_service.getTransactionByTid(tid, function(err, newtran1) {
+				if (err)
+					return callback({err: 21, msg: '连接出现错误'});
+				if (!newtran)
+					return callback({err: 22, msg: '订单神秘消失，详情请收看走进科学'});
+				if (newtran.comment1 && newtran.comment2) {
+					transaction_service.finishTransaction(tid, function(err, flag2) {
+						if (err)
+							return callback({err: 31, msg: '连接出现错误'});
+						if (flag == 0)
+							return callback({err: 32, msg: '更新没有成功'});
+						transaction_service.getTransactionByTid(tid, function(err, newtran2) {
+							if (err)
+								return callback({err: 41, msg: '连接出现错误'});
+							if (!newtran2)
+								return callback({err: 42, msg: '订单神秘消失，详情请收看走进科学'});
+							return callback(null, newtran2);
+						});
+					});
+				}
+				else
+					return callback(null, newtran1);
+			});
+		});
+	});
+};
+
+Transaction.borrowFromMe = function(uid, callback) {
+	book_service.getMyBooks(uid, function(err, bids) {
+		if (err)
+			return callback({err: 11, msg: '连接出现错误'});
+		transaction_service.getAllTransOfBids(bids, function(err, docs) {
+			if (err)
+				return callback({err: 12, msg: '连接又出现了问题'});
+			return callback(null, docs);
+		});
+	});
+};
+
+Transaction.borrowToMe = function(uid, callback) {
+	transaction_service.getAllTransOfUser(uid, function(err, docs) {
+		if (err)
+			return callback({err: 11, msg: '连接出现问题'});
+		return callback(null, docs);
+	});
 };

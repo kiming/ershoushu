@@ -125,3 +125,69 @@ transaction_service.returnBook = function(tid, callback) {
 		});
 	});
 };
+
+transaction_service.commentTransaction = function(isowner, tid, comment, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		var time = (new Date()).getTime();
+		var commentobj;
+		if (isowner)
+			commentobj = {time: time, comment1: comment};
+		else
+			commentobj = {time: time, comment2: comment};
+		collection.update({tid: tid}, {$set: commentobj}, function(err, flag) {
+			if (err)
+				return callback(err);
+			return callback(null, flag);
+		});
+	});
+};
+
+transaction_service.finishTransaction = function(tid, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		collection.update({tid: tid}, {$set: {status: 4}}, function(err, flag) {
+			if (err)
+				return callback(err);
+			return callback(null, flag);
+		});
+	});
+};
+
+transaction_service.getAllComments = function(bid, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		collection.find({bid: bid, status: 4}, {tid: 1, comment1: 1, comment2: 1, _id: 0}).sort({startTime: -1}).toArray(function(err, docs) {
+			if (err)
+				return callback(err);
+			return (null, docs);
+		});
+	});
+};
+
+transaction_service.getAllTransOfBids = function(bids, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		collection.find({bid: {$in: bids}}, {_id: 0}).sort({startTime: -1}).toArray(function(err, docs) {
+			if (err)
+				return callback(err);
+			return callback(null, docs);
+		});
+	});
+};
+
+transaction_service.getAllTransOfUser = function(uid, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		collection.find({ber: uid}, {_id: 0}).sort({startTime: -1}).toArray(function(err, docs) {
+			if (err)
+				return callback(err);
+			return callback(null, docs);
+		});
+	});
+};

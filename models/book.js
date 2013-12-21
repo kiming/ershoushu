@@ -12,6 +12,7 @@ function Book(book) {
 	this.brief = book.brief;//简介
 	this.shelfTime = (new Date()).getTime();//创建时间
 	this.borrowable = book.borrowable;//true拥有者愿意出借此书, false不愿意
+	this.counts = 0;//已经被借阅过多少次了
 	this.available = true;//true书尚未被借，false书已被借，书刚生成时肯定是尚未被借的
 	this.pics = book.pics;
 };
@@ -71,3 +72,15 @@ Book.releaseBook = function(bid, callback) {
 		});
 	});
 };
+
+Book.getCommentOfABook = function(bid, callback) {
+	transaction_service.getAllComments(bid, function(err, docs) {
+		if (err)
+			return callback({err: 2, msg: '连接错误'})
+		return callback(null, docs);
+	});
+};
+
+Book.searchBook = function(key, callback) {
+	book_service.searchAllBooks(key, callback);
+}

@@ -326,7 +326,7 @@ module.exports = function(app) {
         if (isNaN(tid))
             return res.end(JSON.stringify({result: 0, data: {err: 31, msg: '订单号不合法'}}));
 
-        Transaction.calcelTransaction(req.session.user.uid, tid, function(err, tran) {
+        Transaction.cancelTransaction(req.session.user.uid, tid, function(err, tran) {
             if (err)
                 return res.end(JSON.stringify({result: 0, data: err}));
             return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
@@ -347,6 +347,79 @@ module.exports = function(app) {
             if (err)
                 return res.end(JSON.stringify({result: 0, data: err}));
              return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+        });
+    });
+
+    app.post('/order/owner_comment', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        if (!req.body.tid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入订单号'}}));
+        var tid = parseInt(req.body.tid);
+        if (isNaN(tid))
+            return res.end(JSON.stringify({result: 0, data: {err: 41, msg: '订单号不合法'}}));
+        var comment = req.body.comment;
+        if (!comment)
+            return res.end(JSON.stringify({result: 0, data: {err: 42, msg: '没有输入评论'}}));
+        Transaction.OwnerComment(req.session.user.uid, tid, comment, function(err, tran) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: err}));
+            return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+        });
+    });
+
+    app.post('/order/reader_comment', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        if (!req.body.tid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入订单号'}}));
+        var tid = parseInt(req.body.tid);
+        if (isNaN(tid))
+            return res.end(JSON.stringify({result: 0, data: {err: 41, msg: '订单号不合法'}}));
+        var comment = req.body.comment;
+        if (!comment)
+            return res.end(JSON.stringify({result: 0, data: {err: 42, msg: '没有输入评论'}}));
+        Transaction.ReaderComment(req.session.user.uid, tid, comment, function(err, tran) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: err}));
+            return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+        });
+    });
+
+    //别人借我的书
+    app.get('/order/reader', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        Transaction.borrowFromMe(req.session.user.uid, function(err, docs) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: err}));
+            return res.end(JSON.stringify({result: 1, data: docs}));
+        });
+    });
+
+    //我借别人的书
+    app.get('/order/sender', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        Transaction.borrowToMe(req.session.user.uid, function(err, docs) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: err}));
+            return res.end(JSON.stringify({result: 1, data: docs}));
+        });
+    });
+
+    app.get('/search', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.query.key || req.query.key == "")
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '请输入关键词'}}));
+        Book.searchBook(req.query.key, function(err, docs) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 2, msg: '连接错误'}}));
+            return res.end(JSON.stringify({result: 1, data: {books: docs}}));
         });
     });
 };
