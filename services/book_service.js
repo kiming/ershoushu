@@ -118,7 +118,7 @@ book_service.searchAllBooks = function(key, callback) {
         if (err)
             return callback(err);
         var word = new RegExp(key);
-        collection.find({bookname: word}, {$id_: 0}).sort({shelfTime: -1}).toArray(function(err, docs) {
+        collection.find({bookname: word, borrowable: true}, {$id_: 0}).sort({shelfTime: -1}).toArray(function(err, docs) {
             if (err)
                 return callback(err);
             return callback(null, docs);
@@ -130,14 +130,10 @@ book_service.getMyBooks = function(uid, callback) {
     db.collection('books', function(err, collection) {
         if (err)
             return callback(err);
-        collection.find({owner: uid}, {_id: 0, bid: 1}).sort({shelfTime: -1}).toArray(function(err, docs) {
+        collection.find({owner: uid}, {_id: 0}).sort({shelfTime: -1}).toArray(function(err, docs) {
             if (err)
                 return callback(err);
-            var ans = [];
-            //console.log(docs);
-            for (var i in docs)
-                ans.push(docs[i].bid);
-            return callback(null, ans);
+            return callback(null, docs);
         });
     });
 };

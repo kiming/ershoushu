@@ -110,7 +110,7 @@ Transaction.refuseTransaction = function(uid, tid, callback) {
 	});
 };
 
-Transaction.calcelTransaction = function(uid, tid, callback) {
+Transaction.cancelTransaction = function(uid, tid, callback) {
 	transaction_service.getTransactionByTid(tid, function(err, tran) {
 		if (err)
 			return callback({err: 2, msg: '查询图书时连接错误'});
@@ -274,8 +274,12 @@ Transaction.ReaderComment = function(uid, tid, comment, callback) {
 	});
 };
 
+//查找
 Transaction.borrowFromMe = function(uid, callback) {
-	book_service.getMyBooks(uid, function(err, bids) {
+	book_service.getMyBooks(uid, function(err, docs2) {
+		var bids = [];
+        for (var i in docs2)
+            bids.push(docs2[i].bid);
 		if (err)
 			return callback({err: 11, msg: '连接出现错误'});
 		transaction_service.getAllTransOfBids(bids, function(err, docs) {

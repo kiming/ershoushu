@@ -2,8 +2,17 @@
 var Book = require('../models/book');
 var Transaction = require('../models/transaction')
 var file_service = require('../services/file_service');
+var init_service = require('../services/init_service');
 
 module.exports = function(app) {
+    app.get('/init', function(req, res) {
+        init_service.init(function(err, amount) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '失败'}}));
+            return res.end(JSON.stringify({result: 0, data: {amount: amount}}));
+        });
+    });
+
     app.get('/ordertest', function(req, res) {
         return res.render('order_test');
     });
@@ -89,8 +98,9 @@ module.exports = function(app) {
     });
 
     app.get('/logout', function(req, res){
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
         req.session.user = null;
-        return res.redirect('/login');
+        return res.end(JSON.stringify({result: 1, data: {msg: '登出成功'}}));
     });
 
     app.get('/check/email/:email', function(req, res){
@@ -112,6 +122,8 @@ module.exports = function(app) {
 
     app.post('/upload/picture', function(req, res){
         res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
         var sts = [];
         for (var i in req.files) {
             var file = req.files[i];
@@ -178,8 +190,21 @@ module.exports = function(app) {
         });
     });
 
+    app.get('/get/allmybook', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        Book.getAllBooksOfOwner(req.session.user.uid, function(err, docs) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '连接出现错误'}}));
+            return res.end(JSON.stringify({result: 1, data: {books: docs}}));
+        });
+    });
+
     app.post('/modify/book', function(req, res){
         res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
         if (!req.body.bookname)
             return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入书名'}}));
         if (!req.body.pages)
@@ -225,9 +250,9 @@ module.exports = function(app) {
         });
     });
 
-    app.get('/remove/book', function(req, res){
-        //判断书的所有者才能移除这本书
-    });
+    //app.get('/remove/book', function(req, res){
+        
+    //});
     
     //创建订单
     //需要参数: bid  
@@ -274,6 +299,24 @@ module.exports = function(app) {
                 });
             });
         });
+    });
+
+    app.get('/order/get', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        if (!req.query.tid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入订单号'}}));
+        var tid = parseInt(req.query.tid);
+        if (isNaN(tid))
+            return res.end(JSON.stringify({result: 0, data: {err: 31, msg: '订单号不合法'}}));
+        Transaction.getTransactionByTid(tid, function(err, tran) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 2, msg: '连接出现问题'}}));
+            return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+        });
+        
     });
     
     //订单要得到lender，即出借这本书的人的确认
@@ -396,7 +439,7 @@ module.exports = function(app) {
         Transaction.borrowFromMe(req.session.user.uid, function(err, docs) {
             if (err)
                 return res.end(JSON.stringify({result: 0, data: err}));
-            return res.end(JSON.stringify({result: 1, data: docs}));
+            return res.end(JSON.stringify({result: 1, data: {trans: docs}}));
         });
     });
 
@@ -408,7 +451,7 @@ module.exports = function(app) {
         Transaction.borrowToMe(req.session.user.uid, function(err, docs) {
             if (err)
                 return res.end(JSON.stringify({result: 0, data: err}));
-            return res.end(JSON.stringify({result: 1, data: docs}));
+            return res.end(JSON.stringify({result: 1, data: {trans: docs}}));
         });
     });
 

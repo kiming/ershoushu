@@ -83,4 +83,8 @@ Book.getCommentOfABook = function(bid, callback) {
 
 Book.searchBook = function(key, callback) {
 	book_service.searchAllBooks(key, callback);
-}
+};
+
+Book.getAllBooksOfOwner = function(uid, callback) {
+	book_service.getMyBooks(uid, callback);
+};

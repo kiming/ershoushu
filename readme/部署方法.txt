@@ -1,0 +1,5 @@
+进入ershoushu文件夹下
+运行sudo nohup node app &
+然后访问URL: /init初始化数据库
+因为init是毁灭性的，所以慎用
+初始email和密码都为tttt
