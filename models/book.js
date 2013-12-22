@@ -10,6 +10,7 @@ function Book(book) {
 	this.pages = book.pages;
 	this.price = book.price;
 	this.brief = book.brief;//简介
+	this.publisher = book.publisher;//出版社
 	this.shelfTime = (new Date()).getTime();//创建时间
 	this.borrowable = book.borrowable;//true拥有者愿意出借此书, false不愿意
 	this.counts = 0;//已经被借阅过多少次了

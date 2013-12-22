@@ -147,6 +147,8 @@ module.exports = function(app) {
             return res.end(JSON.stringify({result: 0, data: {err: 5, msg: '价格输入不合法'}}));
         if (!req.body.brief)
             return res.end(JSON.stringify({result: 0, data: {err: 6, msg: '没有输入简介'}}));
+        if (!req.body.publisher)
+            return res.end(JSON.stringify({result: 0, data: {err: 7, msg: '没有输入出版社信息'}}));
         var newBook = new Book({
             owner: req.session.user.uid,
             isbn: req.body.isbn,
@@ -156,6 +158,7 @@ module.exports = function(app) {
             pages: parseInt(req.body.pages),
             price: parseFloat(req.body.price),
             brief: req.body.brief,
+            publisher: req.body.publisher,
             borrowable: parseInt(req.body.borrowable) == 1,//1则true/愿意借,false不愿意借
             pics: JSON.parse(req.body.pics)//必须是一个JSON.stringify过的数组，即使是空的
         });
@@ -219,6 +222,8 @@ module.exports = function(app) {
             return res.end(JSON.stringify({result: 0, data: {err: 6, msg: '没有输入简介'}}));
         if (!req.body.bid)
             return res.end(JSON.stringify({result: 0, data: {err: 7, msg: '没有传入书的ID'}}));
+        if (!req.body.publisher)
+            return res.end(JSON.stringify({result: 0, data: {err: 51, msg: '没有输入出版社信息'}}));
         var bid = parseInt(req.body.bid);
         //书借出去以后是不允许修改的
         Book.getBook(bid, function(err, bk) {
@@ -237,6 +242,7 @@ module.exports = function(app) {
                 pages: parseInt(req.body.pages),
                 price: parseFloat(req.body.price),
                 brief: req.body.brief,
+                publisher: req.body.publisher,
                 borrowable: parseInt(req.body.borrowable) == 1,//1则true/愿意借,false不愿意借
                 pics: JSON.parse(req.body.pics)//必须是一个JSON.stringify过的数组，即使是空的
             };
