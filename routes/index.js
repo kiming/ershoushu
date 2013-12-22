@@ -19,7 +19,7 @@ module.exports = function(app) {
 
     app.get('/', function(req, res){
         res.render('index.ejs', {
-            title: "跑起来了吧"
+            title: "阿汤是SB"
         });
     });
 
