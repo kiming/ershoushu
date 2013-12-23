@@ -13,6 +13,22 @@ module.exports = function(app) {
         });
     });
 
+    app.get('/get/user', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.query.uid)
+            res.end(JSON.stringify({result: 0, data: {err: 1, msg: '你没有输入uid'}}));
+        var uid = parseInt(req.query.uid);
+        if (isNaN(uid))
+            res.end(JSON.stringify({result: 0, data: {err: 2, msg: '你输入的uid不合法'}}));
+        User.getUserSafe(uid, function(err, user) {
+            if (err)
+                res.end(JSON.stringify({result: 0, data: {err: 3, msg: '连接错误'}}));
+            if (!user)
+                res.end(JSON.stringify({result: 0, data: {err: 4, msg: '木有这个用户'}}));
+            res.end(JSON.stringify({result: 0, data: {user: user}}));
+        });
+    });
+
     app.get('/ordertest', function(req, res) {
         return res.render('order_test');
     });

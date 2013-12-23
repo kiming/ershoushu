@@ -24,3 +24,7 @@ User.getUser = function(email, callback) {
 User.checkLegal = function(email, password, callback) {
 	user_service.getUserByEmailAndPassword(email, password, callback);
 };
+
+User.getUserSafe = function(uid, callback) {
+    user_service.getUserByUid(uid, callback);
+};

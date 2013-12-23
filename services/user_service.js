@@ -72,6 +72,18 @@ user_service.getUserByEmailAndPassword = function(email, password, callback) {
 	});
 };
 
+user_service.getUserByUid = function(uid, callback) {
+	db.collection('users', function(err, collection){
+		if (err)
+			return callback(err);
+		collection.findOne({uid: uid}, {_id: 0, password: 0}, function(err, user) {
+			if (err)
+				return callback(err);
+			callback(null, user);
+		});
+	});
+};
+
 /*
 user_service.saveUser = function(user, callback) {
 	mongodb.open(function (err, db) {

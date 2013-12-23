@@ -18,7 +18,7 @@ function Transaction(trans) {
 	this.endTime = null;//应还日期
 	this.returnTime = null;//实际归还日期
 	this.status = 1;//1刚下订单、订单刚被创建，2订单得到了lender的确认，3订单已归还，正在等待双方评论 4订单已归还，双方评论完成 -1订单自己取消 -2订单被拒绝
-}
+};
 
 module.exports = Transaction;
 
