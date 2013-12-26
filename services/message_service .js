@@ -1,4 +1,4 @@
-var book_service = exports;
+var message_service = exports;
 var MongoClient = require('mongodb').MongoClient;
 var settings = require('../settings');
 var db;
@@ -8,37 +8,48 @@ MongoClient.connect("mongodb://" + settings.host + ':' + settings.port + '/' + s
 	db = getdb;
 });
 
-book_service.saveBook = function(book, callback) {
-	db.collection('books', function(err, collection){
+message_service.saveMessage = function(message, callback) {
+	db.collection('messages', function(err, collection){
 		if(err) {
 			return callback(err);
 		}
 		db.collection('indices', function(err, indice_coll){
             if (err)
                 return callback(err);
-			indice_coll.findOne({type: 'book'}, function(err, out){
+			indice_coll.findOne({type: 'message'}, function(err, out){
 				if (err)
     				return callback(err);
-    			book.bid = out.id;
+    			message.mid = out.id;
 
-    			collection.insert(book, {
+    			collection.insert(message, {
     				safe: true
-    			}, function(err, db_book){
+    			}, function(err, db_message){
     				if (err) {
     					return callback(err);
     				}
-    				indice_coll.update({type: 'book'}, {$inc: {id: 1}}, function(err, result){
+    				indice_coll.update({type: 'message'}, {$inc: {id: 1}}, function(err, result){
         				if (err) {
         					return callback(err);
         				}
-        				callback(null, db_book[0]);//成功！err 为 null，并返回存储后的用户文档
+        				callback(null, db_message[0]);//成功！err 为 null，并返回存储后的用户文档
         			});
     			});
 			});
 		});
 	});
 };
-
+message_service.getAllMyMessage = function(uid, callback) {
+    db.collection('messages', function(err, collection) {
+        if (err)
+            return callback(err);
+        collection.find({toUid: uid}, {_id: 0}).sort({shelfTime: -1}).toArray(function(err, docs) {
+            if (err)
+                return callback(err);
+            return callback(null, docs);
+        });
+    });
+};
+/*
 book_service.getBookByBid = function(bid, callback) {
     db.collection('books', function(err, collection){
         if (err) {
@@ -90,7 +101,6 @@ book_service.checkExistAndOwner = function(bid, callback){
                 be: book.borrowable,
                 ae: book.available,
                 oid: book.owner
-                rbook:book;
             });
         });
     });
@@ -137,4 +147,4 @@ book_service.getMyBooks = function(uid, callback) {
             return callback(null, docs);
         });
     });
-};
+};*/

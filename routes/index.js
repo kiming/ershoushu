@@ -1,5 +1,7 @@
 ﻿var User = require('../models/user');
 var Book = require('../models/book');
+var Message = require('../models/message');
+
 var Transaction = require('../models/transaction')
 var file_service = require('../services/file_service');
 var init_service = require('../services/init_service');
@@ -219,6 +221,17 @@ module.exports = function(app) {
             return res.end(JSON.stringify({result: 1, data: {books: docs}}));
         });
     });
+    /* sjf represent comment */
+    app.get('/get/allmyMessage', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        Message.getAllMyMessage(req.session.user.uid, function(err, messageList) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '连接出现错误'}}));
+            return res.end(JSON.stringify({result: 1, data: {messages: messageList}}));
+        });
+    });
 
     app.post('/modify/book', function(req, res){
         res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
@@ -300,7 +313,7 @@ module.exports = function(app) {
                 return res.end(JSON.stringify({result: 0, data: {err: 6, msg: '这本书已设置了不允许外借'}}));
             if (!obj.ae)
                 return res.end(JSON.stringify({result: 0, data: {err: 7, msg: '这本书已出借'}}));
-
+            var book=obj.rbook;
             Transaction.checkDupOrder(req.session.user.uid, bid, function(err, flag) {
                 if (err)
                     return res.end(JSON.stringify({result: 0, data: {err: 10, msg: '连接问题'}}));
@@ -317,7 +330,41 @@ module.exports = function(app) {
                         return res.end(JSON.stringify({result: 0, data: {err: 8, msg: '该图书根本就不存在嘛'}}));
                     if (!transaction)
                         return res.end(JSON.stringify({result: 0, data: {err: 9, msg: '该订单未成功生成，请重试'}}));
-                    return res.end(JSON.stringify({result: 1, data: {transaction: transaction}}));
+                    //sjf add here
+                    //填写message需要的全部消息，已经有的是图书id和借书人
+                    //需要查询后才能填写的是借阅人的昵称，图书的名字
+                    //图书的名字已经能够获取，这里修改了之前checkExist的结果，
+                    //首先根据图书id查阅图书名称以及拥有者id
+                            var ownerId = book.owner;
+                            var bookname = book.bookname;
+                            //查找借阅人的名字
+                            User.getUser(req.session.user.uid,function(err,owner){
+                                if(!err){
+                                    var messageE = {
+                                        //mid自动生成
+                                        fromUid : req.session.user.uid,
+                                        toUid : ownerId,
+                                        mType : 1,
+                                        bookId : bid,
+                                        tid : transaction.tid,
+                                        //cTime 自动生成
+                                        fromUserName: owner.nicknam,
+                                        bookName : bookname
+                                    }
+                                    var message = new Message(messageE);
+                                    message.save(function(err){
+                                        if(!err){
+                                             //sjf move here 
+                                            return res.end(JSON.stringify({result: 1, data: {transaction: transaction}}));
+                                        }else{
+                                            return res.end(JSON.stringify({result: 0, data: {err: 12, msg: '消息生成失败，借阅不成功:3'}}));
+                                        }
+                                    });
+                                }else{
+                                    return res.end(JSON.stringify({result: 0, data: {err: 11, msg: '消息生成失败，借阅不成功:2'}}));
+                                }
+                            });
+                    //sjf add here end 
                 });
             });
         });
