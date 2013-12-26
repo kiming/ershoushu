@@ -5,10 +5,11 @@ function Message(message) {
 	this.tid = message.tid;
 	this.fromUid = message.fromUid;
 	this.toUid = message.toUid;
+	//type 1:发起借阅请求 2：拥有者拒绝 3：拥有者同意 4拥有者确认还书 5借阅者发起评论 6拥有者回复评论
 	this.mType = message.mType;
 	this.bookId = message.bookId;
 	this.cTime = (new Date()).getTime();//创建时间
-	/*convenient content*/
+	/*convenient content*/ 
 	this.fromUserName = message.ownerName;
 	this.bookName = message.bookname;
 };
