@@ -39,7 +39,8 @@ init_service.init = function(callback) {
 										var obj = [
 											{type: 'user', id: 1},
 											{type: 'book', id: 1},
-											{type: 'order', id: 2013000003}
+											{type: 'order', id: 2013000003},
+											{type: 'message', id: 1}
 										];
 										collection4.insert(obj, function(err, flag5) {
 											if (err)

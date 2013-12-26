@@ -89,8 +89,8 @@ book_service.checkExistAndOwner = function(bid, callback){
                 exist: true,
                 be: book.borrowable,
                 ae: book.available,
-                oid: book.owner
-                rbook:book;
+                oid: book.owner,
+                rbook:book
             });
         });
     });
