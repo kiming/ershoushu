@@ -42,7 +42,7 @@ message_service.getAllMyMessage = function(uid, callback) {
     db.collection('messages', function(err, collection) {
         if (err)
             return callback(err);
-        collection.find({toUid: uid}, {_id: 0}).sort({shelfTime: -1}).toArray(function(err, docs) {
+        collection.find({toUid: uid, status: 0}, {_id: 0}).sort({shelfTime: -1}).toArray(function(err, docs) {
             if (err)
                 return callback(err);
             return callback(null, docs);
