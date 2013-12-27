@@ -1,5 +1,6 @@
 var book_service = require('../services/book_service');
 var user_service = require('../services/user_service');
+var transaction_service = require('../services/transaction_service');
 
 function Book(book) {
 	this.bid;
