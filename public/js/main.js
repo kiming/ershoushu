@@ -111,7 +111,7 @@ var MyApplication = {
 		},{
 			itemName : "出版时间",
 			name : "publishDate",
-			type : "text",
+			type : "date",
 			value : ""
 		},{
 			itemName : "出版社",
@@ -172,27 +172,27 @@ var MyApplication = {
 	},
 	Urls : {
 		home : "",
-		getMessage : "servlet/GetMessage",
-		getOrder : "servlet/GetMessage",
-		getAllMessages : "servlet/GetAllMessages",
-		getMyBooks : "servlet/GetMyBooks",
-		getMyBorrow : "servlet/GetMyBorrow",
-		uploadBook : "servlet/GetMessage",
-		uploadPic:"servlet/GetMessage",
+		getMessage : "/message/count",
+		getOrder : "/book/news",
+		getAllMessages : "/message/getall",
+		getMyBooks : "/book/my",
+		getMyBorrow : "/book/myborrow",
+		uploadBook : "/create/book",
+		uploadPic:"/upload/picture",
 		getPersonInf : "",
 		login : "/login",
 		logout : "/logout",
-		register : "servlet/Register",
-		searchBooks : "servlet/Login",
-		getOneBook : "servlet/Login",
-		createOrder : "servlet/Logout",
-		confirmOrder : "servlet/GetMessage",
-		refuseOrder : "servlet/GetMessage",
-		canelOrder : "servlet/GetMessage",
-		confirmReturn : "servlet/GetMessage",
-		readerComment : "servlet/GetMessage",
-		ownerComment : "servlet/GetMessage",
-		showComments:"servlet/GetMessage"
+		register : "/reg",
+		searchBooks : "/search",
+		getOneBook : "/get/book",
+		createOrder : "/order/create",
+		confirmOrder : "/order/confirm",
+		refuseOrder : "/order/refuse",
+		canelOrder : "/order/cancel",
+		confirmReturn : "/order/return",
+		readerComment : "/order/reader_comment",
+		ownerComment : "/order/owner_comment",
+		showComments:"/book/comment"
 	},
 	Login : false, // 登陆标示符
 	Timeout : null, // 轮询函数指针
@@ -230,6 +230,30 @@ var MyApplication = {
 			var topNav = $("#topNav").empty();
 			topNav
 					.append($("<li class='withHL' id='registerBut'>注册</li><li class='withHL' id='loginBut'>登陆</li>"));
+			$("#loginBut").click(function() {
+				MyApplication.View.showBox("login");
+			});
+			$("#registerBut").click(function() {
+				MyApplication.View.showBox("register");
+			});
+		}
+	},
+	initializeLoginState : function(){
+		if (MyApplication.Login === true) {
+			var topNav = $("#topNav").empty();
+			topNav.append($("<li class='withHL' id='logout'>退出</li><li class='withHL' id='uploadBook'>上传书籍</li><li class='withHL' id='myHome'>个人中心</li>"));
+			$("#myHome").click(function() {
+				MyApplication.Control.getPersonInf();
+			});
+			$("#logout").click(function() {
+				MyApplication.Control.logout();
+			});
+			$("#uploadBook").click(function() {
+				MyApplication.View.showBox("uploadBook");
+			});
+		} else {
+			var topNav = $("#topNav").empty();
+			topNav.append($("<li class='withHL' id='registerBut'>注册</li><li class='withHL' id='loginBut'>登陆</li>"));
 			$("#loginBut").click(function() {
 				MyApplication.View.showBox("login");
 			});
@@ -319,6 +343,17 @@ Request.prototype.send = function() {
 	$.ajax(ajaxArg);
 };
 
+Request.prototype.get = function() {
+	var ajaxArg = {
+			type : "get",
+			url : this.url,
+			dataType : "json",
+			data : this.args,
+			success : this.callback
+		};
+		$.ajax(ajaxArg);
+}; 
+
 // Control层，接受用户输入，调用Request或者View层响应用户输出
 function Control() {
 }
@@ -331,7 +366,7 @@ Control.prototype.getMessage = function(loop) {// loop,循环。true代表轮询
 		var data = [];
 		var callback = MyApplication.View.getMessage;
 		var req = new Request(url, data, callback);
-		req.send();
+		req.get();
 	}
 	if (loop === true) {
 		MyApplication.Timeout = setTimeout(function() {
@@ -378,6 +413,7 @@ Control.prototype.uploadBook = function(){
 			$(".err").text(res.msg);
 			return;
 		}
+		
 		var callback = MyApplication.View.uploadBook;
 		var req = new Request(url, data, callback);
 		req.send();
@@ -394,7 +430,7 @@ Control.prototype.searchBooks = function() {
 		data = $("#search_form1").serializeArray(); // 搜索页的search_form
 	var callback = MyApplication.View.searchBooks;
 	var req = new Request(url, data, callback);
-	req.send();
+	req.get();
 	MyApplication.loading();
 };
 Control.prototype.showOneBook = function(bookID) {
@@ -502,7 +538,7 @@ Control.prototype.getPersonInf = function() {
 		var data = [];
 		var callback = MyApplication.View.getPersonInf;
 		var req = new Request(url, data, callback);
-		req.send();
+		req.get();
 		MyApplication.loading();
 	}
 };
@@ -512,7 +548,7 @@ Control.prototype.getMyBooks = function() {
 		var data = [];
 		var callback = MyApplication.View.getMyBooks;
 		var req = new Request(url, data, callback);
-		req.send();
+		req.get();
 		MyApplication.loading();
 	}
 };
@@ -522,7 +558,7 @@ Control.prototype.getMyBorrow = function() {
 		var data = [];
 		var callback = MyApplication.View.getMyBorrow;
 		var req = new Request(url, data, callback);
-		req.send();
+		req.get();
 		MyApplication.loading();
 	}
 };
@@ -553,7 +589,6 @@ Control.prototype.uploadPic = function(fileID){
 		fileElementId : fileID,
 		dataType : 'json',
 		success : function(data,status) {
-			data = [{"result":1,"data":{"pic":"./pics/bd302442f47a61c0234bfd6b8beee9d3.jpg"}}];
 			if (data[0].result == 1) {
 				$("[name='pics']").val("['"+data[0].data.pic+"']");
 			}
@@ -622,7 +657,7 @@ function View() {
 // 下列函数列表表示各个动作完成后的界面更改，并绑定事件
 View.prototype.initialize = function() { // 页面初始化
 	MyApplication.Login = $("#loginOrNot").val() === "true" ? true : false;
-	MyApplication.changeLoginState();
+	MyApplication.initializeLoginState();
 	MyApplication.Tpl.bookItem = $("#bookTemplate").html();
 	MyApplication.Tpl.article = $("#articleTemplate").html();
 	MyApplication.Tpl.comment = $("#commentTemplate").html();
@@ -844,12 +879,28 @@ View.prototype.showOneBook = function(data) {
 View.prototype.showComments = function(data){
 	$("#loadingComments").remove();
 	var container = $("#comments1 ul:first");
+	var commentTpl = new Tpl(MyApplication.Tpl.commentTemplate);
+	var replyTpl = new Tpl(MyApplication.Tpl.replyTemplate);
 	if (data.result == 1) {
-		//[{reader:{}readerComment:{},owner:{},ownerComment:{}}]
-		var comments = data.data.comments;
+		//{result: 1, data: {owner: {uid: 1, nickname: '阿汤'....}, 
+		//pairs: [{reader: {uid: 2, nickname: '啊'， r_comment:'reader评论',o_comment:'owner评论'}}, {...}, ...]}}
+		var comments = data.data.pairs;
+		var owner = data.owner;
 		for(var i=0,size=comments.size();i<size;i++){
-			var comment = comments[i];
-			
+			var comment = comments[i].reader;
+			comment.username = comment.nickname;
+			comment.content = comment.r_comment.content;
+			comment.pubTime = (new Date(comment.r_comment.time)).toLocaleDateString();
+			comment.avatar = '/image/default.jpg';
+			comment.reply = '';
+			if(comment.o_comment != null && comment.o_comment.content){
+				owner.username = owner.nickname;
+				owner.content = comment.o_comment.content;
+				owner.pubTime = (new Date(comment.o_comment.time)).toLocaleDateString();
+				owner.avatar = '/image/default.jpg';
+				comment.reply = replyTpl.initialize(owner);
+			}
+			container.append($(commentTpl.initialize(comment)));
 		}
 	} else {
 		container.append("<div>"+data.data.msg+"</div>");
@@ -908,15 +959,6 @@ View.prototype.confirmReturn = function(data) {
 
 };
 View.prototype.getPersonInf = function(data) {
-	
-	data = {result: 1, data: {messages:[{tid:1,fromUserName:"汤志辉",bookName:"货币战争",cTime:1285862400000,bookId:1,mType:4},
-	                                    {tid:1,fromUserName:"汤志辉",bookName:"货币战争",cTime:1285862400000,bookId:1,mType:5},
-	                                    {tid:1,fromUserName:"汤志辉",bookName:"货币战争",cTime:1285862400000,bookId:1,mType:1},
-	                                    {tid:1,fromUserName:"汤志辉",bookName:"货币战争",cTime:1285862400000,bookId:1,mType:2},
-	                                    {tid:1,fromUserName:"汤志辉",bookName:"货币战争",cTime:1285862400000,bookId:1,mType:3},
-	                                    {tid:1,fromUserName:"汤志辉",bookName:"货币战争",cTime:1285862400000,bookId:1,mType:4},
-	                                    {tid:1,fromUserName:"汤志辉",bookName:"货币战争",cTime:1285862400000,bookId:1,mType:5},
-	                                    {tid:1,fromUserName:"汤志辉",bookName:"货币战争",cTime:1285862400000,bookId:1,mType:2}]}}; //待删除
 	if (data.result == 1) {
 		MyApplication.loading();
 		$("#mainBar").show();
@@ -1110,7 +1152,6 @@ View.prototype.getMyBorrow = function(data) {
 	}
 };
 View.prototype.getOrder = function(data) {
-	data = {result: 1, data: {transaction: {tid:5,endTime:1285862400000,ber:{nickname:"唐子辉",email:"gay@10ss.me",mobile:189898922}}}};
 	if (data.result == 1) {
 		MyApplication.loading();
 		var order = data.data.transaction;
@@ -1196,13 +1237,18 @@ View.prototype.genBox = function(message) { // 生成悬浮框
 					selectItem.append(option);
 				}
 			}else if(arg.type == "file"){
-				 item.children("input").attr("id","uploadPic");
-				 /*item.children("input").bind("dbclick",function(){
-					 MyApplication.Control.uploadPic("uploadPic");
-				 });	*/	
-			}				
+				 item.children("input").attr("id","uploadPic");	
+			}else if(arg.type == "time"){
+				arg.type = 'text';
+				item = $(formItem.initialize(arg));
+				item.children("input").attr("class","input formTime");	
+			}			
 			form.append(item);
 		}
+		$(".formTime").bind("change",function(){
+			var that = $(this);
+
+		});
 		form.append("<div class='err'></div>");
 		messageDialog.buttons = {
 			"提交" : message.func,
@@ -1233,7 +1279,7 @@ View.prototype.genBox = function(message) { // 生成悬浮框
 };
 View.prototype.getMessage = function(data) {
 	if (data.result == 1) {
-		var num = data.data.messageNum;
+		var num = data.data.messageCount;
 		var message = {
 			title : "消息提示",
 			content : "您有" + num + "条消息待处理",
