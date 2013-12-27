@@ -139,10 +139,10 @@ transaction_service.commentTransaction = function(isowner, tid, comment, callbac
 		var time = (new Date()).getTime();
 		var commentobj;
 		if (isowner)
-			commentobj = {time: time, comment1: comment};
+			commentobj = {comment1: {time: time, comment: comment}};
 		else
-			commentobj = {time: time, comment2: comment};
-		collection.update({tid: tid}, {$set: commentobj}, function(err, flag) {
+			commentobj = {comment2: {time: time, comment: comment}};
+		collection.update({tid: tid}, {$set: {commentobj}}, function(err, flag) {
 			if (err)
 				return callback(err);
 			return callback(null, flag);
@@ -212,7 +212,7 @@ transaction_service.getAllCommentOfABook = function(bid, callback) {
 			docs.forEach(function(entry) {
 				var newEntry = {};
 				newEntry.tid = entry.tid;
-				user_service.getUserByUid(entry.uid, function(err, user) {
+				user_service.getUserByUid(entry.ber, function(err, user) {
 					if (err)
 						return callback(err);
 					newEntry.reader = user;
