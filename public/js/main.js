@@ -148,7 +148,7 @@ var MyApplication = {
 			itemName : "图片",
 			name : "pics",
 			type : "hidden",
-			value : ""
+			value : "[]"
 		},{
 			itemName : "图片",
 			name : "pic",
@@ -405,7 +405,6 @@ Control.prototype.register = function() {
 };
 Control.prototype.uploadBook = function(){
 	if (MyApplication.Control.checkLogin()) {
-		MyApplication.Control.uploadPic("uploadPic");
 		var url = MyApplication.Urls.uploadBook;
 		var data = $("#dialogForm").serializeArray();
 		//var res = MyApplication.Control.checkForm(data);
@@ -440,7 +439,7 @@ Control.prototype.showOneBook = function(bookID) {
 	} ];
 	var callback = MyApplication.View.showOneBook;
 	var req = new Request(url, data, callback);
-	req.send();
+	req.get();
 	MyApplication.loading();
 };
 Control.prototype.showComments = function(bookID){
@@ -451,7 +450,7 @@ Control.prototype.showComments = function(bookID){
 	} ];
 	var callback = MyApplication.View.showComments;
 	var req = new Request(url, data, callback);
-	req.send();
+	req.get();
 };
 Control.prototype.createOrder = function(bookID) {
 	if (MyApplication.Control.checkLogin()) {
@@ -475,7 +474,7 @@ Control.prototype.getOrder = function(bookID) {
 		} ];
 		var callback = MyApplication.View.getOrder;
 		var req = new Request(url, data, callback);
-		req.send();
+		req.get();
 		MyApplication.loading();
 	}
 };
@@ -589,8 +588,12 @@ Control.prototype.uploadPic = function(fileID){
 		dataType : 'json',
 		success : function(data,status) {
 			if (data[0].result == 1) {
-				$("[name='pics']").val("['"+data[0].data.pic+"']");
+				$("[name='pics']").val("[\""+data[0].data.pic+"\"]");
+				MyApplication.Control.uploadBook();
+			}else{
+				$('.err').html("上传书籍失败!");
 			}
+
 		},
 		error: function (data, status, e){
 			alert(e);
@@ -741,7 +744,7 @@ View.prototype.showBox = function(type, title, content) { // 展示各个box,包
 		message.title = "上传书籍";
 		message.isForm = true;
 		message.args = MyApplication.TplArgs.uploadBookForm;
-		message.func = MyApplication.Control.uploadBook;
+		message.func = function(){MyApplication.Control.uploadPic("uploadPic");};
 		break;
 	default:
 		break;
@@ -771,7 +774,11 @@ View.prototype.uploadBook = function(data) {
 	if (data.result == 1) {
 		MyApplication.loading();
 		$("#dialogForm").dialog("close");
-		MyApplication.changeLoginState();
+		var message = {
+			title : "上传书籍",
+			content : '上传书籍成功!'
+		};
+		MyApplication.View.genBox(message);
 	} else {
 		MyApplication.loading();
 		$(".err").text(data.data.msg);
@@ -1097,8 +1104,12 @@ View.prototype.getMyBooks = function(data) {
 			bookObject.no = i + 1;
 			var shelfTime = new Date(bookObject.shelfTime);
 			bookObject.shelfTime = shelfTime.toLocaleDateString();
-			var available = bookObject.available;
-			bookObject.available = available === true ? "可借" : "已被借出";
+			if(bookObject.borrowable){
+				var available = bookObject.available;
+				bookObject.available = available === true ? "可借" : "已被借出";
+			}else{
+				bookObject.available = "不可借";
+			}	
 			bookObject.visible = available === true ? "hidden" : "visible";
 			var ava = bookObject.available
 					+ "<a href='javascript:void(0)' class='getTra' id='"
@@ -1154,19 +1165,20 @@ View.prototype.getOrder = function(data) {
 	if (data.result == 1) {
 		MyApplication.loading();
 		var order = data.data.transaction;
+		var reader = data.data.reader;
 		var ul = "<ul class='mylist'>";
 		var tpl = new Tpl(MyApplication.Tpl.listItem);
 		var endTime = new Date(order.endTime);
 		order.endTime = endTime.toLocaleDateString();
 		var args = [ {
 			itemName : "借书人",
-			itemValue : order.ber.nickname
+			itemValue : reader.nickname
 		}, {
 			itemName : "邮箱",
-			itemValue : order.ber.email
+			itemValue : reader.email
 		}, {
 			itemName : "手机",
-			itemValue : order.ber.mobile
+			itemValue : reader.mobile
 		}, {
 			itemName : "应还时间",
 			itemValue : order.endTime
@@ -1279,6 +1291,9 @@ View.prototype.genBox = function(message) { // 生成悬浮框
 View.prototype.getMessage = function(data) {
 	if (data.result == 1) {
 		var num = data.data.messageCount;
+		if(num == 0){
+			return;
+		}
 		var message = {
 			title : "消息提示",
 			content : "您有" + num + "条消息待处理",
