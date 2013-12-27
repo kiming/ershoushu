@@ -42,7 +42,7 @@ message_service.getAllMyMessage = function(uid, callback) {
     db.collection('messages', function(err, collection) {
         if (err)
             return callback(err);
-        collection.find({toUid: uid, status: 0}, {_id: 0}).sort({shelfTime: -1}).toArray(function(err, docs) {
+        collection.find({toUid: uid}, {_id: 0}).sort({shelfTime: -1}).toArray(function(err, docs) {
             if (err)
                 return callback(err);
             return callback(null, docs);
@@ -54,7 +54,7 @@ message_service.getMessageCount = function(uid, callback) {
     db.collection('messages', function(err, collection) {
         if (err)
             return callback(err);
-        collection.count({toUid: uid}, function(err, total) {
+        collection.count({toUid: uid, status: 0}, function(err, total) {
             if (err)
                 return callback(err);
             return callback(null, total);
@@ -66,7 +66,7 @@ message_service.getMessageArray = function(uid, callback) {
     db.collection('messages', function(err, collection) {
         if (err)
             return callback(err);
-        collection.find({toUid: uid}, {_id: 0, mid: 1}).sort({mid: 1}).toArray(function(err, docs) {
+        collection.find({toUid: uid, status: 0}, {_id: 0, mid: 1}).sort({mid: 1}).toArray(function(err, docs) {
             if (err)
                 return callback(err);
             var output = [];
