@@ -408,12 +408,11 @@ Control.prototype.uploadBook = function(){
 		MyApplication.Control.uploadPic("uploadPic");
 		var url = MyApplication.Urls.uploadBook;
 		var data = $("#dialogForm").serializeArray();
-		var res = MyApplication.Control.checkForm(data);
-		if (!res.isOk) {
-			$(".err").text(res.msg);
-			return;
-		}
-		
+		//var res = MyApplication.Control.checkForm(data);
+		//if (!res.isOk) {
+		//	$(".err").text(res.msg);
+		//	return;
+		//}		
 		var callback = MyApplication.View.uploadBook;
 		var req = new Request(url, data, callback);
 		req.send();
