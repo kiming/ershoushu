@@ -61,6 +61,37 @@ message_service.getMessageCount = function(uid, callback) {
         });
     });
 };
+
+message_service.getMessageArray = function(uid, callback) {
+    db.collection('messages', function(err, collection) {
+        if (err)
+            return callback(err);
+        collection.find({toUid: uid}, {_id: 0, mid: 1}).sort({mid: 1}).toArray(function(err, docs) {
+            if (err)
+                return callback(err);
+            var output = [];
+            for (var i in docs) {
+                var entry = docs[i];
+                output.push(entry.mid);
+            }
+            return callback(null, output);
+        });
+    });
+};
+
+message_service.markread = function(arr, callback) {
+    if (arr.length == 0)
+        return callback(null, 0);
+    db.collection('messages'. function(err, collection) {
+        if (err)
+            return callback(err);
+        collection.update({mid: {$in: arr}}, {$set: {status: 1}}, function(err, count) {
+            if (err)
+                return callback(err);
+            return callback(null, count);
+        });
+    });
+};
 /*
 book_service.getBookByBid = function(bid, callback) {
     db.collection('books', function(err, collection){

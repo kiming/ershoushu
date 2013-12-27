@@ -12,6 +12,7 @@ function Message(message) {
 	/*convenient content*/ 
 	this.fromUserName = message.ownerName;
 	this.bookName = message.bookname;
+	this.status = 0;//未读
 };
 
 module.exports = Message;
@@ -26,6 +27,14 @@ Message.getAllMyMessage = function(uid, callback) {
 
 Message.getMessageCount = function(uid, callback) {
 	message_service.getMessageCount(uid, callback);
+};
+
+Message.getMessageArray = function(uid, callback) {
+	message_service.getMessageArray(uid, callback);
+};
+
+Message.markread = function(arr, callback) {
+	message_service.markread(arr, callback);
 };
 	/*unimplement service function*/
 

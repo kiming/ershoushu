@@ -1,6 +1,7 @@
 var transaction_service = exports;
 //var mongodb = require('../models/db');
 var user_service = require('./user_service');
+var book_service = require("./book_service");
 var MongoClient = require('mongodb').MongoClient;
 var settings = require('../settings');
 var db;

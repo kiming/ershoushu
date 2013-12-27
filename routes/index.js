@@ -635,7 +635,11 @@ module.exports = function(app) {
         Message.getMessageCount(req.session.user.uid, function(err, count) {
             if (err)
                 return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '数据库连接错误'}}));
-            return res.end(JSON.stringify({result: 1, data: {messageCount: count}}));
+            Message.getMessageArray(req.session.user.uid, function(err, arr) {
+                if (err)
+                    return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '数据库连接错误'}}));
+                return res.end(JSON.stringify({result: 1, data: {messageCount: count, arr: arr}}));
+            });
         });
     });
 
@@ -689,6 +693,18 @@ module.exports = function(app) {
                     return res.end(JSON.stringify({result: 0, data: {err: 4, msg: '出问题了'}}));
                 return res.end(JSON.stringify({result: 1, data: {transaction: order, reader: reader}}))
             });
+        });
+    });
+
+    app.post('/markread', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        var arr = JSON.parse(req.body.arr);
+        Message.markread(arr, function(err, count) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '连接错误'}}));
+            return res.end(JSON.stringify({result: 1, data: {count: count}}));
         });
     });
 };

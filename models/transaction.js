@@ -235,7 +235,7 @@ Transaction.OwnerComment = function(uid, tid, comment, callback) {
 			transaction_service.commentTransaction(true, tid, comment, function(err, flag1) {
 				if (err)
 					return callback({err: 11, msg: '连接出现错误'});
-				if (flag == 0)
+				if (flag1 == 0)
 					return callback({err: 12, msg: '更新没有成功'});
 				transaction_service.getTransactionByTid(tid, function(err, newtran1) {
 					if (err)
@@ -246,7 +246,7 @@ Transaction.OwnerComment = function(uid, tid, comment, callback) {
 						transaction_service.finishTransaction(tid, function(err, flag2) {
 							if (err)
 								return callback({err: 31, msg: '连接出现错误'});
-							if (flag == 0)
+							if (flag2 == 0)
 								return callback({err: 32, msg: '更新没有成功'});
 							transaction_service.getTransactionByTid(tid, function(err, newtran2) {
 								if (err)
@@ -280,7 +280,7 @@ Transaction.ReaderComment = function(uid, tid, comment, callback) {
 		transaction_service.commentTransaction(false, tid, comment, function(err, flag1) {
 			if (err)
 				return callback({err: 11, msg: '连接出现错误'});
-			if (flag == 0)
+			if (flag1 == 0)
 				return callback({err: 12, msg: '更新没有成功'});
 			transaction_service.getTransactionByTid(tid, function(err, newtran1) {
 				if (err)
@@ -291,7 +291,7 @@ Transaction.ReaderComment = function(uid, tid, comment, callback) {
 					transaction_service.finishTransaction(tid, function(err, flag2) {
 						if (err)
 							return callback({err: 31, msg: '连接出现错误'});
-						if (flag == 0)
+						if (flag2 == 0)
 							return callback({err: 32, msg: '更新没有成功'});
 						transaction_service.getTransactionByTid(tid, function(err, newtran2) {
 							if (err)
