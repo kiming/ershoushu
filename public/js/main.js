@@ -1174,6 +1174,10 @@ View.prototype.getMyBorrow = function(data) {
 			bookObject.no = i + 1;
 			var endTime = new Date(tran.endTime);
 			bookObject.endTime = endTime.toLocaleDateString();
+			bookObject.returnTime = "";
+			if(tran.returnTime == null || tran.returnTime<=0){
+
+			}
 			var returnTime = new Date(tran.returnTime);
 			bookObject.returnTime = returnTime.toLocaleDateString();
 			table.fnAddData([ bookObject.no, bookObject.author,
