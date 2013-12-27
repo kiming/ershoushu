@@ -166,12 +166,17 @@ module.exports = function(app) {
             return res.end(JSON.stringify({result: 0, data: {err: 6, msg: '没有输入简介'}}));
         if (!req.body.publisher)
             return res.end(JSON.stringify({result: 0, data: {err: 7, msg: '没有输入出版社信息'}}));
+        var pd = req.body.publishDate, pd2;
+        if (pd.split('-').length == 3)
+            pd2 = (new Date(pd)).getTime();
+        else
+            pd2 = parseInt(pd);
         var newBook = new Book({
             owner: req.session.user.uid,
             isbn: req.body.isbn,
             bookname: req.body.bookname,
             author: req.body.author,
-            publishDate: parseInt(req.body.publishDate),//前台传过来的应该是从1970年1月1日起过的毫秒值
+            publishDate: pd2,//前台传过来的应该是从1970年1月1日起过的毫秒值
             pages: parseInt(req.body.pages),
             price: parseFloat(req.body.price),
             brief: req.body.brief,
