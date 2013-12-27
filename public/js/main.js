@@ -192,7 +192,8 @@ var MyApplication = {
 		confirmReturn : "/order/return",
 		readerComment : "/order/reader_comment",
 		ownerComment : "/order/owner_comment",
-		showComments:"/book/comment"
+		showComments:"/book/comment",
+		confirmMessages:"/order/confirm"
 	},
 	Login : false, // 登陆标示符
 	Timeout : null, // 轮询函数指针
@@ -487,7 +488,7 @@ Control.prototype.confirmOrder = function(orderID) {
 		} ];
 		var callback = MyApplication.View.confirmOrder;
 		var req = new Request(url, data, callback);
-		req.send();
+		req.get();
 		MyApplication.loading();
 	}
 };
@@ -500,7 +501,7 @@ Control.prototype.refuseOrder = function(orderID) {
 		} ];
 		var callback = MyApplication.View.refuseOrder;
 		var req = new Request(url, data, callback);
-		req.send();
+		req.get();
 		MyApplication.loading();
 	}
 };
@@ -526,7 +527,7 @@ Control.prototype.confirmReturn = function(orderID) {
 		} ];
 		var callback = MyApplication.View.confirmReturn;
 		var req = new Request(url, data, callback);
-		req.send();
+		req.get();
 		MyApplication.loading();
 	}
 };
@@ -600,6 +601,14 @@ Control.prototype.uploadPic = function(fileID){
 		}
 	});
 };
+Control.prototype.confirmMessages = function(messageIDs){
+	var url = MyApplication.Urls.confirmMessages;
+	var data = {"arr":messageIDs};
+	var callback = function(){};
+	var req = new Request(url, data, callback);
+	req.get();
+	MyApplication.loading();
+};
 Control.prototype.checkForm = function(data) {
 	var res = {
 		isOk : true,
@@ -668,9 +677,7 @@ View.prototype.initialize = function() { // 页面初始化
 	MyApplication.Tpl.myBook = $("#myBooksTemplate").html();
 	MyApplication.Tpl.myBorrow = $("#myBorrowTemplate").html();
 	MyApplication.Tpl.message = $("#messagesTemplate").html();
-	MyApplication.Timeout = setTimeout(function() {
-		MyApplication.Control.getMessage(true);
-	}, 300000);	
+	MyApplication.Control.getMessage(true);
 	$(".index").click(function() {
 		MyApplication.View.jump(MyApplication.Urls.home);
 	});
@@ -756,6 +763,8 @@ View.prototype.login = function(data) {
 		MyApplication.loading();
 		$("#dialogForm").dialog("close");
 		MyApplication.changeLoginState();
+		clearTimeout(MyApplication.Timeout);
+		MyApplication.Control.getMessage(true);
 	} else {
 		MyApplication.loading();
 		$(".err").text(data.data.msg);
@@ -765,6 +774,7 @@ View.prototype.logout = function(data) {
 	if (data.result == 1) {
 		MyApplication.loading();
 		MyApplication.changeLoginState();
+		clearTimeout(MyApplication.Timeout);
 	} else {
 		MyApplication.loading();
 		MyApplication.View.showBox("general", "用户退出", data.data.msg);
@@ -789,6 +799,8 @@ View.prototype.register = function(data) {
 		MyApplication.loading();
 		$("#dialogForm").dialog("close");
 		MyApplication.changeLoginState();
+		clearTimeout(MyApplication.Timeout);
+		MyApplication.Control.getMessage(true);
 	} else {
 		MyApplication.loading();
 		$(".err").text(data.data.msg);
@@ -892,7 +904,7 @@ View.prototype.showComments = function(data){
 		//pairs: [{reader: {uid: 2, nickname: '啊'， r_comment:'reader评论',o_comment:'owner评论'}}, {...}, ...]}}
 		var comments = data.data.pairs;
 		var owner = data.owner;
-		for(var i=0,size=comments.size();i<size;i++){
+		for(var i=0,size=comments.length;i<size;i++){
 			var comment = comments[i].reader;
 			comment.username = comment.nickname;
 			comment.content = comment.r_comment.content;
@@ -962,7 +974,16 @@ View.prototype.cancelOrder = function(data) {
 
 };
 View.prototype.confirmReturn = function(data) {
-
+	if (data.result == 1) {
+		MyApplication.loading();
+	} else {
+		MyApplication.loading();
+		var message = {
+			title : "借阅书籍",
+			content : data.data.msg
+		};
+		MyApplication.View.genBox(message);
+	}
 };
 View.prototype.getPersonInf = function(data) {
 	if (data.result == 1) {
@@ -1020,6 +1041,9 @@ View.prototype.getPersonInf = function(data) {
 			default:
 				break;
 			}
+			if(message.status == 1){
+				message.operate = "";
+			}
 			table.fnAddData([ message.no, message.inf, message.cTime,
 					message.operate ]);		
 		}
@@ -1056,7 +1080,7 @@ View.prototype.getPersonInf = function(data) {
 		$(".readerComment").bind("click",function(){
 			var orderID = $(this).attr("id");
 			var content = "<form id='readerComment'><input type='hidden' name='tid' value='"+orderID+"'/>" +
-					"<textarea class='commentTextarea' value='' name='content'></textarea></form>";
+					"<textarea class='commentTextarea' value='' name='comment'></textarea></form>";
 			var message = {
 					title : "发表评论",
 					content : content,
@@ -1070,7 +1094,7 @@ View.prototype.getPersonInf = function(data) {
 		$(".ownerComment").bind("click",function(){
 			var orderID = $(this).attr("id");
 			var content = "<form id='ownerComment'><input type='hidden' name='tid' value='"+orderID+"'/>" +
-					"<textarea class='commentTextarea' value='' name='content'></textarea></form>";
+					"<textarea class='commentTextarea' value='' name='comment'></textarea></form>";
 			var message = {
 					title : "回复该评论",
 					content : content,
@@ -1107,10 +1131,12 @@ View.prototype.getMyBooks = function(data) {
 			if(bookObject.borrowable){
 				var available = bookObject.available;
 				bookObject.available = available === true ? "可借" : "已被借出";
+				bookObject.visible = available === true ? "hidden" : "visible";
 			}else{
 				bookObject.available = "不可借";
+				bookObject.visible = 'hidden';
 			}	
-			bookObject.visible = available === true ? "hidden" : "visible";
+			
 			var ava = bookObject.available
 					+ "<a href='javascript:void(0)' class='getTra' id='"
 					+ bookObject.bid + "' style=\"visibility:"
@@ -1135,18 +1161,20 @@ View.prototype.getMyBooks = function(data) {
 View.prototype.getMyBorrow = function(data) {
 	if (data.result == 1) {
 		MyApplication.loading();
-		var books = data.data.books;
+		//{result: 1, data: {pairs: [{tran: {}, book: {}}, {...}]}}
+		var books = data.data.pairs;
 		var table = $('#myBorrow table').dataTable();
 		var allRows = table.$("tr");
 		for ( var i = 0, size = allRows.length; i < size; i++) {
 			table.fnDeleteRow(allRows[i]);
 		}
 		for ( var i = 0, size = books.length; i < size; i++) {
-			var bookObject = books[i];
+			var bookObject = books[i].book;
+			var tran = books[i].tran;
 			bookObject.no = i + 1;
-			var endTime = new Date(bookObject.endTime);
+			var endTime = new Date(tran.endTime);
 			bookObject.endTime = endTime.toLocaleDateString();
-			var returnTime = new Date(bookObject.returnTime);
+			var returnTime = new Date(tran.returnTime);
 			bookObject.returnTime = returnTime.toLocaleDateString();
 			table.fnAddData([ bookObject.no, bookObject.author,
 					bookObject.bookname, bookObject.endTime,
@@ -1290,6 +1318,7 @@ View.prototype.genBox = function(message) { // 生成悬浮框
 };
 View.prototype.getMessage = function(data) {
 	if (data.result == 1) {
+		var messageIDs = data.data.arr;
 		var num = data.data.messageCount;
 		if(num == 0){
 			return;
@@ -1299,8 +1328,9 @@ View.prototype.getMessage = function(data) {
 			content : "您有" + num + "条消息待处理",
 			isForm : false,
 			args : [],
-			func : MyApplication.Control.getPersonInf,
-			func1 : function() {
+			func : function(){
+				MyApplication.Control.confirmMessages(messageIDs);
+				MyApplication.Control.getPersonInf();
 			},
 			isConfirm : true,
 			buttons : [ "查看", "忽略" ],
