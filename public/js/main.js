@@ -900,8 +900,6 @@ View.prototype.showComments = function(data){
 	var commentTpl = new Tpl(MyApplication.Tpl.commentTemplate);
 	var replyTpl = new Tpl(MyApplication.Tpl.replyTemplate);
 	if (data.result == 1) {
-		//{result: 1, data: {owner: {uid: 1, nickname: '阿汤'....}, 
-		//pairs: [{reader: {uid: 2, nickname: '啊'， r_comment:'reader评论',o_comment:'owner评论'}}, {...}, ...]}}
 		var comments = data.data.pairs;
 		var owner = data.owner;
 		for(var i=0,size=comments.length;i<size;i++){
@@ -1174,12 +1172,12 @@ View.prototype.getMyBorrow = function(data) {
 			bookObject.no = i + 1;
 			var endTime = new Date(tran.endTime);
 			bookObject.endTime = endTime.toLocaleDateString();
-			bookObject.returnTime = "";
-			if(tran.returnTime == null || tran.returnTime<=0){
-
+			bookObject.returnTime = "尚未归还";
+			if(!(tran.returnTime == null || tran.returnTime<=0)){
+				var returnTime = new Date(tran.returnTime);
+				bookObject.returnTime = returnTime.toLocaleDateString();
 			}
-			var returnTime = new Date(tran.returnTime);
-			bookObject.returnTime = returnTime.toLocaleDateString();
+			
 			table.fnAddData([ bookObject.no, bookObject.author,
 					bookObject.bookname, bookObject.endTime,
 					bookObject.returnTime ]);
