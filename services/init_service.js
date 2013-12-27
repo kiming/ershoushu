@@ -27,25 +27,33 @@ init_service.init = function(callback) {
 						collection3.remove(function(err, flag3) {
 							if (err)
 								return callback(err);
-							collection3.insert({uid: 0, email: 'tttt', password: "32bf0e6fcff51e53bd74e70ba1d622b2"}, function(err, flag) {
+							db.collection('messages', function(err, collection10) {
 								if (err)
 									return callback(err);
-								db.collection('indices', function(err, collection4) {
+								collection10.remove(function(err, flagn) {
 									if (err)
 										return callback(err);
-									collection4.remove(function(err, flag4) {
+									collection3.insert({uid: 0, email: 'tttt', password: "32bf0e6fcff51e53bd74e70ba1d622b2"}, function(err, flag) {
 										if (err)
 											return callback(err);
-										var obj = [
-											{type: 'user', id: 1},
-											{type: 'book', id: 1},
-											{type: 'order', id: 2013000003},
-											{type: 'message', id: 1}
-										];
-										collection4.insert(obj, function(err, flag5) {
+										db.collection('indices', function(err, collection4) {
 											if (err)
 												return callback(err);
-											return callback(null, true);
+											collection4.remove(function(err, flag4) {
+												if (err)
+													return callback(err);
+												var obj = [
+													{type: 'user', id: 1},
+													{type: 'book', id: 1},
+													{type: 'order', id: 2013000003},
+													{type: 'message', id: 1}
+												];
+												collection4.insert(obj, function(err, flag5) {
+													if (err)
+														return callback(err);
+													return callback(null, true);
+												});
+											});
 										});
 									});
 								});
