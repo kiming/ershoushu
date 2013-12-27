@@ -240,9 +240,9 @@ Transaction.OwnerComment = function(uid, tid, comment, callback) {
 				transaction_service.getTransactionByTid(tid, function(err, newtran1) {
 					if (err)
 						return callback({err: 21, msg: '连接出现错误'});
-					if (!newtran)
+					if (!newtran1)
 						return callback({err: 22, msg: '订单神秘消失，详情请收看走进科学'});
-					if (newtran.comment1 && newtran.comment2) {
+					if (newtran1.comment1 && newtran1.comment2) {
 						transaction_service.finishTransaction(tid, function(err, flag2) {
 							if (err)
 								return callback({err: 31, msg: '连接出现错误'});
@@ -285,9 +285,9 @@ Transaction.ReaderComment = function(uid, tid, comment, callback) {
 			transaction_service.getTransactionByTid(tid, function(err, newtran1) {
 				if (err)
 					return callback({err: 21, msg: '连接出现错误'});
-				if (!newtran)
+				if (!newtran1)
 					return callback({err: 22, msg: '订单神秘消失，详情请收看走进科学'});
-				if (newtran.comment1 && newtran.comment2) {
+				if (newtran1.comment1 && newtran1.comment2) {
 					transaction_service.finishTransaction(tid, function(err, flag2) {
 						if (err)
 							return callback({err: 31, msg: '连接出现错误'});
