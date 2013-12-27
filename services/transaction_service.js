@@ -142,7 +142,7 @@ transaction_service.commentTransaction = function(isowner, tid, comment, callbac
 			commentobj = {comment1: {time: time, comment: comment}};
 		else
 			commentobj = {comment2: {time: time, comment: comment}};
-		collection.update({tid: tid}, {$set: {commentobj}}, function(err, flag) {
+		collection.update({tid: tid}, {$set: commentobj}, function(err, flag) {
 			if (err)
 				return callback(err);
 			return callback(null, flag);
