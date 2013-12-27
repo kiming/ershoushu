@@ -82,7 +82,7 @@ message_service.getMessageArray = function(uid, callback) {
 message_service.markread = function(arr, callback) {
     if (arr.length == 0)
         return callback(null, 0);
-    db.collection('messages'. function(err, collection) {
+    db.collection('messages', function(err, collection) {
         if (err)
             return callback(err);
         collection.update({mid: {$in: arr}}, {$set: {status: 1}}, function(err, count) {
