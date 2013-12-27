@@ -36,9 +36,8 @@ module.exports = function(app) {
     });
 
     app.get('/', function(req, res){
-        res.render('index.ejs', {
-            title: "阿汤是SB"
-        });
+        var status = (req.session.user == null) ? 'false': 'true'; 
+        res.render('test.ejs', {status: status});
     });
 
     app.post('/reg', function(req, res) {
@@ -115,7 +114,7 @@ module.exports = function(app) {
         });
     });
 
-    app.get('/logout', function(req, res){
+    app.post('/logout', function(req, res){
         res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
         req.session.user = null;
         return res.end(JSON.stringify({result: 1, data: {msg: '登出成功'}}));
@@ -348,7 +347,7 @@ module.exports = function(app) {
                                         bookId : bid,
                                         tid : transaction.tid,
                                         //cTime 自动生成
-                                        fromUserName: owner.nicknam,
+                                        fromUserName: owner.nickname,
                                         bookName : bookname
                                     }
                                     var message = new Message(messageE);
@@ -424,7 +423,25 @@ module.exports = function(app) {
         Transaction.refuseTransaction(req.session.user.uid, tid, function(err, tran) {
             if (err)
                 return res.end(JSON.stringify({result: 0, data: err}));
-            return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+            Book.getBook(tran.bid, function(err, book) {
+                if (err)
+                    return res.end(JSON.stringify({result: 0, data: {err: 32, msg: '连接问题'}}));
+                var message = new Message({
+                    tid: tran.tid,
+                    fromUid: req.session.user.uid,
+                    toUid: tran.ber,
+                    mType: 2,
+                    bookId: tran.bid,
+                    ownerName: req.session.user.nickname,
+                    bookname: book.bookname
+                });
+
+                message.save(function(err) {
+                    if (err)
+                        return res.end(JSON.stringify({result: 0, data: {err: 33, msg: '连接问题'}}));
+                    return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+                });
+            });
         });
     });
 
@@ -458,7 +475,24 @@ module.exports = function(app) {
         Transaction.returnBook(req.session.user.uid, tid, function(err, tran) {
             if (err)
                 return res.end(JSON.stringify({result: 0, data: err}));
-             return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+            Book.getBook(tran.bid, function(err, book) {
+                if (err)
+                    return res.end(JSON.stringify({result: 0, data: {err: 32, msg: '连接错误'}}));
+                var message = new Message({
+                    tid: tid,
+                    fromUid: req.session.user.uid,
+                    toUid: tran.ber,
+                    mType: 4,
+                    bookId: tran.bid,
+                    ownerName: req.session.user.nickname,
+                    bookname: book.bookname
+                });
+                message.save(function(err) {
+                    if (err)
+                        return res.end(JSON.stringify({result: 0, data: {err: 33, msg: '连接错误'}}));
+                    return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+                });
+            });
         });
     });
 
@@ -477,7 +511,24 @@ module.exports = function(app) {
         Transaction.OwnerComment(req.session.user.uid, tid, comment, function(err, tran) {
             if (err)
                 return res.end(JSON.stringify({result: 0, data: err}));
-            return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+            Book.getBook(tran.bid, function(err, book) {
+                if (err)
+                    return res.end(JSON.stringify({result: 0, data: {err: 43, msg: '没有输入评论'}}));
+                var message = new Message({
+                    tid: tran.tid,
+                    fromUid: req.session.user.uid,
+                    toUid: tran.ber,
+                    mType: 6,
+                    bookId: tran.bid,
+                    ownerName: req.session.user.nickname,
+                    bookname: book.bookname
+                });
+                message.save(function(err) {
+                    if (err)
+                        return res.end(JSON.stringify({result: 0, data: {err: 44, msg: '没有输入评论'}}));
+                    return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+                });
+            });
         });
     });
 
@@ -496,7 +547,28 @@ module.exports = function(app) {
         Transaction.ReaderComment(req.session.user.uid, tid, comment, function(err, tran) {
             if (err)
                 return res.end(JSON.stringify({result: 0, data: err}));
-            return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+            Book.getBook(tran.bid, function(err, book) {
+                if (err)
+                    return res.end(JSON.stringify({result: 0, data: {err: 43, msg: '没有输入评论'}}));
+                User.getUser(book.owner, function(err, owner) {
+                    if (err)
+                        return res.end(JSON.stringify({result: 0, data: {err: 44, msg: '没有输入评论'}}));
+                    var message = new Message({
+                        tid: tid,
+                        fromUid: req.session.user.uid,
+                        toUid: book.owner,
+                        mType: 5,
+                        bookId: tran.bid,
+                        ownerName: owner.nickname,
+                        bookname: book.bookname
+                    });
+                    message.save(function(err) {
+                        if (err)
+                            return res.end(JSON.stringify({result: 0, data: {err: 45, msg: '没有输入评论'}}));
+                        return res.end(JSON.stringify({result: 1, data: {transaction: tran}}));
+                    });
+                });
+            });
         });
     });
 
@@ -532,6 +604,86 @@ module.exports = function(app) {
             if (err)
                 return res.end(JSON.stringify({result: 0, data: {err: 2, msg: '连接错误'}}));
             return res.end(JSON.stringify({result: 1, data: {books: docs}}));
+        });
+    });
+
+    app.get('/book/comment', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        if (!req.query.bid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有输入图书的bid'}}));
+        var bid = parseInt(req.query.bid);
+        if (isNaN(bid))
+            return res.end(JSON.stringify({result: 0, data: {err: 2, msg: 'bid非法'}}));
+        Book.getDetailedComments(bid, function(err, data) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 3, msg: '不明错误'}}));
+            return res.end(JSON.stringify({result: 1, data: data}));
+        });
+    });
+
+    app.get('/message/count', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        Message.getMessageCount(req.session.user.uid, function(err, count) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '数据库连接错误'}}));
+            return res.end(JSON.stringify({result: 1, data: {messageCount: count}}));
+        });
+    });
+
+    app.get('/message/getall', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        Message.getAllMyMessage(req.session.user.uid, function(err, messages) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '数据库连接错误'}}));
+            return res.end(JSON.stringify({result: 1, data: {messages: messages}}));
+        });
+    });
+
+    app.get('/book/my', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        Book.getAllBooksOfOwner(req.session.user.uid, function(err, books) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '不明连接错误'}}));
+            return res.end(JSON.stringify({result: 1, data: {books: books}}));
+        });
+    });
+
+    app.get('/book/myborrow', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        Transaction.myBorrow(req.session.user.uid, function(err, pairs) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '连接错误'}}));
+            return res.end(JSON.stringify({result: 1, data: {pairs: pairs}}));
+        });
+    });
+
+    app.get('/book/news', function(req, res) {
+        res.setHeader('Content-Type', 'text/JSON;charset=UTF-8');
+        if (!req.session.user)
+            return res.end(JSON.stringify({result: 0, data: {err: 0, msg: '用户没有登录'}}));
+        if (!req.query.bid)
+            return res.end(JSON.stringify({result: 0, data: {err: 1, msg: '没有bid'}}));
+        var bid = parseInt(req.query.bid);
+        if (isNaN(bid))
+            return res.end(JSON.stringify({result: 0, data: {err: 2, msg: 'bid非法'}}));
+        Transaction.newestTran(bid, function(err, order) {
+            if (err)
+                return res.end(JSON.stringify({result: 0, data: {err: 3, msg: '出问题了'}}));
+            User.getUserSafe(order.ber, function(err, reader) {
+                if (err)
+                    return res.end(JSON.stringify({result: 0, data: {err: 4, msg: '出问题了'}}));
+                return res.end(JSON.stringify({result: 1, data: {transaction: order, reader: reader}}))
+            });
         });
     });
 };

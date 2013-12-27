@@ -17,12 +17,15 @@ function Message(message) {
 module.exports = Message;
 
 Message.prototype.save = function(callback) {
-
 	message_service.saveMessage(this, callback);
 };
 
 Message.getAllMyMessage = function(uid, callback) {
 	message_service.getAllMyMessage(uid, callback);
+};
+
+Message.getMessageCount = function(uid, callback) {
+	message_service.getMessageCount(uid, callback);
 };
 	/*unimplement service function*/
 

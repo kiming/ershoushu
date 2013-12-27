@@ -20,7 +20,6 @@ message_service.saveMessage = function(message, callback) {
 				if (err)
     				return callback(err);
     			message.mid = out.id;
-
     			collection.insert(message, {
     				safe: true
     			}, function(err, db_message){
@@ -38,6 +37,7 @@ message_service.saveMessage = function(message, callback) {
 		});
 	});
 };
+
 message_service.getAllMyMessage = function(uid, callback) {
     db.collection('messages', function(err, collection) {
         if (err)
@@ -46,6 +46,18 @@ message_service.getAllMyMessage = function(uid, callback) {
             if (err)
                 return callback(err);
             return callback(null, docs);
+        });
+    });
+};
+
+message_service.getMessageCount = function(uid, callback) {
+    db.collection('messages', function(err, collection) {
+        if (err)
+            return callback(err);
+        collection.count({toUid: uid}, function(err, total) {
+            if (err)
+                return callback(err);
+            return callback(null, total);
         });
     });
 };

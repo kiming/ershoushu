@@ -2,6 +2,8 @@
 var transaction_service = require('../services/transaction_service');
 var book_service = require('../services/book_service');
 var Book = require('./book');
+var Message = require('./message');
+var User = require('./user');
 
 function Transaction(trans) {
 	this.tid;//订单号
@@ -58,17 +60,50 @@ Transaction.ConfirmTransaction = function(uid, tid, callback) {
 			transaction_service.updateTransactionByOwnerPermit(tid, function(err, flag) {
 				if (err)
 					return callback({err: 7, msg: '更新时订单时出现错误'});
-
 				Book.occupyBook(tran.bid, function(err, flag3) {
 					if (err)
 						return callback(err);
-
-					transaction_service.cancelOther(tran.ber, tran.bid, function(err, flag2) {
+					User.getUser(uid, function(err, user) {
 						if (err)
-							return callback({err: 9, msg: '连接出现错误'});
-						if (!flag2)
-							return callback({err: 10, msg: '更新未成功'});
-						return callback(null, true);
+							return callback(err);
+						var message = new Message({
+							tid: tid,
+							fromUid: uid,
+							toUid: tran.ber,
+							mType: 3,
+							bookId: tran.bid,
+							ownerName: user.nickname,
+							bookname: book.bookname
+						});
+						message.save(function(err) {
+							if (err)
+								return callback(err);
+							transaction_service.cancelOther(tran.ber, tran.bid, function(err, canceledtrans) {
+								if (err)
+									return callback({err: 9, msg: '连接出现错误'});
+								var count = 0, limit = canceledtrans.length;
+								if (limit == 0)
+									return callback(null, true);
+								canceledtrans.forEach(function(elem) {
+									var message2 = new Message({
+										tid: elem.tid,
+										fromUid: uid,
+										toUid: elem.ber,
+										mType: 2,
+										bookId: tran.bid,
+										ownerName: user.nickname,
+										bookname: book.bookname
+									});
+									message2.save(function(err) {
+										if (err)
+											return callback(err);
+										count++;
+										if (count == limit)
+											return callback(null, true);
+									});
+								});
+							});
+						});
 					});
 				});
 			});
@@ -296,4 +331,12 @@ Transaction.borrowToMe = function(uid, callback) {
 			return callback({err: 11, msg: '连接出现问题'});
 		return callback(null, docs);
 	});
+};
+
+Transaction.myBorrow = function(uid, callback) {
+	transaction_service.getBorrowedTrans(uid, callback);
+};
+
+Transaction.newestTran = function(bid, callback) {
+	transaction_service.newestTran(bid, callback);
 };

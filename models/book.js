@@ -1,4 +1,5 @@
 var book_service = require('../services/book_service');
+var user_service = require('../services/user_service');
 
 function Book(book) {
 	this.bid;
@@ -77,7 +78,7 @@ Book.releaseBook = function(bid, callback) {
 Book.getCommentOfABook = function(bid, callback) {
 	transaction_service.getAllComments(bid, function(err, docs) {
 		if (err)
-			return callback({err: 2, msg: '连接错误'})
+			return callback({err: 50, msg: '连接错误'});
 		return callback(null, docs);
 	});
 };
@@ -88,4 +89,23 @@ Book.searchBook = function(key, callback) {
 
 Book.getAllBooksOfOwner = function(uid, callback) {
 	book_service.getMyBooks(uid, callback);
+};
+
+Book.getDetailedComments = function(bid, callback) {
+	var output = {};
+	book_service.getBookByBid(bid, function(err, book) {
+		if (err)
+			return callback(err);
+		user_service.getUserByUid(book.owner, function(err, user) {
+			if (err)
+				return callback(err);
+			output.owner = user;
+			transaction_service.getAllCommentOfABook(bid, function(err, pairs) {
+				if (err)
+					return callback(err);
+				output.pairs = pairs;
+				return callback(null, output);
+			});
+		});
+	});
 };

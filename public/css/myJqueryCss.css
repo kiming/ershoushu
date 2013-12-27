@@ -1,0 +1,13 @@
+@charset "utf-8";
+/* CSS Document */
+
+.ui-dialog-titlebar{
+	height:30px;
+	text-align:left;
+}
+
+.ui-widget-overlay {
+   background-color: rgb(0, 0, 0);
+   background-image:none;
+   opacity: 0.1;
+}

@@ -103,7 +103,6 @@ book_service.changeAvailableFlag = function(flag, bid, callback) {
             obj = {$set: {available: flag}, $inc: {counts: 1}};
         else 
             obj = {$set: {available: flag}};
-
         if (err)
             return callback(err);
         collection.update({bid: bid}, obj, function(err, mark) {

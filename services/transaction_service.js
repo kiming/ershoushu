@@ -1,5 +1,6 @@
 var transaction_service = exports;
 //var mongodb = require('../models/db');
+var user_service = require('./user_service');
 var MongoClient = require('mongodb').MongoClient;
 var settings = require('../settings');
 var db;
@@ -81,10 +82,14 @@ transaction_service.cancelOther = function(uid, bid, callback) {
 	db.collection('orders', function(err, collection) {
 		if (err)
 			return callback(err);
-		collection.update({bid: bid, ber: {$ne: uid}, status: 1}, {$set: {status: -2}}, function(err, result) {
+		collection.find({bid: bid, ber: {$ne: uid}, status: 1}).sort({startTime: 1}).toArray(function(err, trans) {
 			if (err)
 				return callback(err);
-			return callback(null, true);
+			collection.update({bid: bid, ber: {$ne: uid}, status: 1}, {$set: {status: -2}}, function(err, result) {
+				if (err)
+					return callback(err);
+				return callback(null, trans);
+			});
 		});
 	});
 };
@@ -188,6 +193,76 @@ transaction_service.getAllTransOfUser = function(uid, callback) {
 			if (err)
 				return callback(err);
 			return callback(null, docs);
+		});
+	});
+};
+
+transaction_service.getAllCommentOfABook = function(bid, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		collection.find({bid: bid, status: 4}, {_id: 0}).sort({startTime: -1}).toArray(function(err, docs) {
+			if (err)
+				return callback(err);
+			var output = [];
+			var o_len = docs.length, count = 0;
+			if (o_len == 0)
+				return callback(null, output);
+			docs.forEach(function(entry) {
+				var newEntry = {};
+				newEntry.tid = entry.tid;
+				user_service.getUserByUid(entry.uid, function(err, user) {
+					if (err)
+						return callback(err);
+					newEntry.reader = user;
+					newEntry.r_comment = entry.comment2;
+					newEntry.o_comment = entry.comment1;
+					output.push(newEntry);
+					count++;
+					if (count == o_len)
+						return callback(null, output);
+				});
+			});
+		});
+	});
+};
+
+transaction_service.getBorrowedTrans = function(uid, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		collection.find({ber: uid, status: {$gte: 2}}, {_id: 0}).sort().toArray(function(err, docs) {
+			if (err)
+				return callback(err);
+			var output = [];
+			var limit = docs.length, count = 0;
+			if (limit == 0)
+				return callback(null, output);
+			docs.forEach(function(entry) {
+				var elem = {};
+				elem.tran = entry;
+				book_service.getBookByBid(entry.bid, function(err, book) {
+					if (err)
+						return callback(err);
+					elem.book = book;
+					output.push(elem);
+					count++;
+					if (count == limit)
+						return callback(null, output);
+				});
+			});
+		});
+	});
+};
+
+transaction_service.newestTran = function(bid, callback) {
+	db.collection('orders', function(err, collection) {
+		if (err)
+			return callback(err);
+		collection.findOne({bid: bid, status: {$gte: 2}}, function(err, order) {
+			if (err)
+				return callback(err);
+			callback(null, order);
 		});
 	});
 };

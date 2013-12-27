@@ -1,0 +1,550 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<script type="text/javascript" src="js/jquery-1.10.1.js"></script>
+		<script type="text/javascript" src="js/jquery-ui-1.10.3.custom.js"></script>
+		<script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
+		<script type="text/javascript" src="js/main.js"></script>
+		<link href="css/jquery-ui-1.10.3.custom.css" rel="stylesheet"
+			type="text/css" />
+		<!--<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">-->
+		<link href="css/main.css" rel="stylesheet" type="text/css" />
+		<link href="css/myJqueryCss.css" rel="stylesheet" type="text/css" />
+		<link href="css/manage.css" rel="stylesheet" type="text/css" />
+		<link href="css/home.css" rel="stylesheet" type="text/css" />
+		<link href="css/demo_table.css" rel="stylesheet" type="text/css" />
+		<title>无标题文档</title>
+	</head>
+	<body>
+		<input type="hidden" value="<%=status %>" id="loginOrNot" />
+		<div id="header_bg">
+			<div id="header">
+				<!-- 页头部分 -->
+				<div id="left">
+					<ul>
+						<li class="withHL index">
+							云图首页
+						</li>
+					</ul>
+				</div>
+				<div id="right">
+					<ul id="topNav">
+						<li class="withHL" id="registerBut">
+							注册
+						</li>
+						<li class="withHL" id="loginBut">
+							登陆
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div id="main">
+			<div id="searchMain" style='width: 720px'>
+				<p id="logo">
+					<img src="image/monkyIncloud.png" width="290" height="190" />
+				</p>
+				<form id="search_form">
+					<input type="text" name="key" id="keyword" maxlength="100"
+						class="ytround" style="width: 474px;" />
+					<input type="button" value="云图一下" id="sub"
+						class="btn searchBookBut" />
+				</form>
+			</div>
+			<div id="mainBar" style="display: none">
+				<div id="searchResult">
+					<form id="search_form1">
+						<input type="text" name="key" maxlength="100"
+							style="width: 474px;" />
+						<input type="button" value="云图一下" class="btn searchBookBut" />
+					</form>
+					<div class="results">
+						<div class="leftBox"></div>
+						<div class="mainBox">
+							<ul id="books">
+
+							</ul>
+							<div class="getMoreBooks">
+								<input name="" type="button" id="getMoreBooks" value="加载更多" />
+							</div>
+						</div>
+						<div class="rightBox"></div>
+					</div>
+					<div id="oneBookDetail" style="display: none">
+					</div>
+					<div id="personInf" style="display: none">
+						<ul>
+							<li>
+								<a href="#messages">消息列表</a>
+							</li>
+							<li>
+								<a href="#myBooks">我上传的书籍</a>
+							</li>
+							<li>
+								<a href="#myBorrow">我借阅的书籍</a>
+							</li>
+						</ul>
+						<div id="messages">
+							<table cellpadding="0" cellspacing="0" border="0" class="display"
+								style="width: 100%;">
+								<thead>
+									<tr>
+										<th>
+											No.
+										</th>
+										<th>
+											消息描述
+										</th>
+										<th>
+											时间
+										</th>
+										<th>
+											操作
+										</th>
+
+									</tr>
+								</thead>
+								<tbody id="messagesBody">
+
+
+								</tbody>
+							</table>
+						</div>
+						<div id="myBooks">
+							<table cellpadding="0" cellspacing="0" border="0" class="display"
+								style="width: 100%;">
+								<thead>
+									<tr>
+										<th>
+											No.
+										</th>
+										<th>
+											作者
+										</th>
+										<th>
+											书名
+										</th>
+										<th>
+											出版社
+										</th>
+										<th>
+											上传时间
+										</th>
+										<th>
+											出借状态
+										</th>
+									</tr>
+								</thead>
+								<tbody id="myBooksBody">
+
+
+								</tbody>
+							</table>
+						</div>
+						<div id="myBorrow">
+							<table cellpadding="0" cellspacing="0" border="0" class="display"
+								style="width: 100%;">
+								<thead>
+									<tr>
+										<th>
+											No.
+										</th>
+										<th>
+											作者
+										</th>
+										<th>
+											书名
+										</th>
+										<th>
+											应还时间
+										</th>
+										<th>
+											实际归还时间
+										</th>
+									</tr>
+								</thead>
+								<tbody id="myBorrowBody">
+
+
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="sideBar" style="display: none">
+				<div id="recentnews">
+					<ul>
+						相关书籍
+						<li>
+							<a href="#">不要和鲨鱼接吻 </a>
+						</li>
+						<li>
+							<a href="#">恋爱中的女人不睡觉</a>
+						</li>
+						<li>
+							<a href="#">万事莫如睡觉急</a>
+						</li>
+						<li>
+							<a href="#">新疆的太陽不睡覺</a>
+						</li>
+					</ul>
+				</div>
+
+				<div id="hotnews">
+					<ul>
+						热门书籍
+						<li>
+							<a href="#">呼兰河传</a><span> 817</span>
+						</li>
+						<li>
+							<a href="#">从异乡到异乡</a><span> 512</span>
+						</li>
+						<li>
+							<a href="#"> 专家：非典过去十年</a><span> 368</span>
+						</li>
+						<li>
+							<a href="#"> 浙江省发现2例人感染H7N9</a><span> 435</span>
+						</li>
+						<li>
+							<a href="#"> 今日之声(4月3日)</a><span>332</span>
+						</li>
+						<li>
+							<a href="#"> 江西卷款近亿元跑路官员在</a><span> 185</span>
+						</li>
+						<li>
+							<a href="#"> 媒体解读北京唯一住房认定</a><span> 156</span>
+						</li>
+						<li>
+							<a href="#"> 13省调最低工资标准 上</a><span> 147</span>
+						</li>
+						<li>
+							<a href="#"> 清明节南方将遭遇强对流天气</a><span> 123</span>
+						</li>
+						<li>
+							<a href="#"> 疾预控中心：监测力度加大后</a><span> 112</span>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div id="footer_bg">
+			<div id="footer">
+				© 2013-2023 公司版权所有 About us | 公司简介 | 联系方法 | 客户服务 | 隐私政策 | 广告服务 |
+				网站地图 | 意见反馈 | 不良信息举报
+			</div>
+		</div>
+
+		<!-- loading模板 -->
+		<div id="loading">
+			<img src="image/loading.gif" />
+			<div>
+				努力工作中···请稍候
+			</div>
+		</div>
+
+		<!-- 书籍模板{image:"",name;"",author:"",bookID:"",publisher:"",year:"",borrower:"",total:"",borrowerNum:""} -->
+		<div id="bookTemplate" style="display: none">
+			<li>
+				<div class="book">
+					<img class="cover" src="{pics}" height="100" width="67" />
+					<div class="bookdetail">
+						<a href="javascript:void(0)" class="bookname" id="{bid}">{bookname}</a>
+						<table border="0" cellpadding="0" cellspacing="0">
+							<tr>
+								<td class="label1">
+									作者：
+								</td>
+								<td class="content" valign="top">
+									{author}
+								</td>
+								<td class="label1">
+									出版社：
+								</td>
+								<td class="content" valign="top">
+									{publisher}
+								</td>
+							</tr>
+							<tr>
+								<td class=label>
+									年份：
+								</td>
+								<td class="content" valign="top">
+									{publishDate}
+								</td>
+								<td class="label1">
+									上架时间：
+								</td>
+								<td class="content" valign="top">
+									{shelfTime}
+								</td>
+							</tr>
+							<tr>
+								<td class=label>
+									页数：
+								</td>
+								<td class="content" valign="top">
+									{pages}
+								</td>
+								<td class="label1">
+									ISBN：
+								</td>
+								<td class="content" valign="top">
+									{isbn}
+								</td>
+							</tr>
+							<tr>
+								<td class="label1">
+									出借状态：
+								</td>
+								<td class="content" valign="top">
+									{available}
+								</td>
+								<td class="label1">
+									已出借次数：
+								</td>
+								<td class="content" valign="top">
+									{counts}
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</li>
+		</div>
+
+		<!-- 评论模块的模板 -->
+		<div id="commentsWrapperTemplate" style="display: none">
+			<div id="commentswapper">
+				<div id="comments">
+					<!-- 评论 -->
+					<div id="division1">
+						已有
+						<font color="#b60c0c">{commentsNum}</font>条评论，共
+						<font color="#b60c0c">{peopleNum}</font>人参与 &nbsp;
+					</div>
+					<div id="block">
+					</div>
+					<div id="comments1">
+						<ul>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- 一条评论模板 -->
+		<div id="commentTemplate" style="display: none">
+			<li class="list_ele">
+				<div>
+					<div class="portrait">
+						<img src="{avatar}" width="50" height="50">
+					</div>
+					<div class="blog">
+						<div class="content">
+							<div class="username">
+								{username}:
+							</div>
+							{content}
+						</div>
+						<div class="funbox">
+							<div class="detail">
+								<span> {pubTime}</span> 来自
+								<span>IPhone 客户端</span>
+							</div>
+							<div class="comment">
+								<ul>
+									<li>
+										<span> <a href="#">支持<font color="#b60c0c">({supportNum})</font>
+										</a> </span>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+					{reply}
+				</div>
+			</li>
+		</div>
+
+
+		<!-- 一条回复的模板 -->
+		<div id="replyTemplate" style="display: none">
+			<div class="reply">
+				<!-- 回复微博 -->
+				<div class="tri">
+					◆
+				</div>
+				<div class="replies">
+					<ul>
+						<li>
+							<div class="list_ele2">
+								<div class="portrait2">
+									<img src="{avatar}" width="30" height="30">
+								</div>
+								<div class="blog2">
+									<div class="content2">
+										<div class="username2">
+											{username}:
+										</div>
+										{content}
+									</div>
+
+									<div class="detail2">
+										<span> {pubTime}</span>
+									</div>
+								</div>
+
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+
+
+		<!-- 书籍详细信息 -->
+		<div id="articleTemplate" style="display: none">
+			<div id="article">
+				<img class="cover" src="{pics}" height="150" width="100">
+					<div id="backToSearchList">
+						<div class="backListBtn">
+							<a href="javascript:void(0)">返回搜索列表</a>
+						</div>
+						<div id="{bid}" class="lendBookBtn" style="visibility:{visible}">
+							<a href="javascript:void(0)">点击借阅</a>
+						</div>
+					</div>
+					<div class="bookdetail">
+						<div id="title">
+							{bookname}
+						</div>
+						<div id="text_detail">
+							<p>
+								作者: {author}
+							</p>
+							<p>
+								出版社: {publisher}
+							</p>
+							<p>
+								出版日期：{publishDate}
+							</p>
+							<p>
+								页数: {pages}
+							</p>
+							<p>
+								ISBN: {isbn}
+							</p>
+							<p>
+								上传日期：{shelfTime}
+							</p>
+							<p>
+								借阅次数: {counts}
+							</p>
+							<p>
+								出借状态: {available}
+							</p>
+
+						</div>
+					</div>
+					<div id="text_content">
+						<div id="d1">
+							简介
+						</div>
+						<div id="text_content1">
+							{brief}
+						</div>
+					</div>
+					<div id="commentsWrapperTemplate">
+						<div id="commentswapper">
+							<div id="comments">
+								<!-- 评论 -->
+								<div id="division1">
+									已有
+									<font color="#b60c0c">0</font>条评论，共
+									<font color="#b60c0c">0</font>人参与 &nbsp;
+								</div>
+								<div id="block">
+								</div>
+								<div id="comments1">
+									<div id="loadingComments">
+										<img src="image/loading.gif" />
+										<div>
+											努力加载评论中···请稍候
+										</div>
+									</div>
+									<ul>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+			</div>
+		</div>
+
+		<table style="display: none">
+			<tbody id="myBooksTemplate">
+				<tr class="oneBook">
+					<td class="center">
+						{no}
+					</td>
+					<td>
+						{author}
+					</td>
+					<td>
+						{bookname}
+					</td>
+					<td>
+						{publisher}
+					</td>
+					<td class="center">
+						{shelfTime}
+					</td>
+					<td>
+						{available}
+						<a href="javascript:void(0)" id="{bid}" style="visibility: {">(查看借阅状态)</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<table style="display: none">
+			<tbody id="messagesTemplate">
+				<tr class="oneMessage">
+					<td class="center">
+						{no}
+					</td>
+					<td>
+						{content}
+					</td>
+					<td class="center">
+						{publishDate}
+					</td>
+					<td>
+						{operate}
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<table style="display: none">
+			<tbody id="myBorrowTemplate">
+				<tr class="oneBorrow">
+					<td class="center">
+						{no}
+					</td>
+					<td>
+						{author}
+					</td>
+					<td>
+						{bookname}
+					</td>
+					<td class="center">
+						{endTime}
+					</td>
+					<td class="center">
+						{returnTime}
+					</td>
+				</tr>
+			</tbody>
+		</table>
+</html>
