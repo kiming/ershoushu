@@ -193,7 +193,8 @@ var MyApplication = {
 		readerComment : "/order/reader_comment",
 		ownerComment : "/order/owner_comment",
 		showComments:"/book/comment",
-		confirmMessages:"/order/confirm"
+		confirmMessages:"/markread",
+		getUserInf:"/get/user",
 	},
 	Login : false, // 登陆标示符
 	Timeout : null, // 轮询函数指针
@@ -479,6 +480,19 @@ Control.prototype.getOrder = function(bookID) {
 		MyApplication.loading();
 	}
 };
+Control.prototype.getUserInf = function(userID) {
+	if (MyApplication.Control.checkLogin()) {
+		var url = MyApplication.Urls.getUserInf;
+		var data = [ {
+			name : "uid",
+			value : userID
+		} ];
+		var callback = MyApplication.View.getUserInf;
+		var req = new Request(url, data, callback);
+		req.get();
+		MyApplication.loading();
+	}
+};
 Control.prototype.confirmOrder = function(orderID) {
 	if (MyApplication.Control.checkLogin()) {
 		var url = MyApplication.Urls.confirmOrder;
@@ -603,11 +617,10 @@ Control.prototype.uploadPic = function(fileID){
 };
 Control.prototype.confirmMessages = function(messageIDs){
 	var url = MyApplication.Urls.confirmMessages;
-	var data = {"arr":messageIDs};
+	var data = {"arr":"["+messageIDs.toString()+"]"};
 	var callback = function(){};
 	var req = new Request(url, data, callback);
-	req.get();
-	MyApplication.loading();
+	req.send();
 };
 Control.prototype.checkForm = function(data) {
 	var res = {
@@ -1006,34 +1019,35 @@ View.prototype.getPersonInf = function(data) {
 			message.cTime = cTime.toLocaleDateString();
 			var mType = message.mType;
 			message.bookName = "《"+message.bookName+"》";
+			message.inf = "<a href='javascript:void(0)' class='getUserInf' id='"+message.fromUid+"'>"+message.fromUserName + "</a>";
 			switch (mType) {
 			case 1:
-				message.inf = message.fromUserName + "请求借阅您的" + message.bookName;
+				message.inf += "请求借阅您的" + message.bookName;
 				message.operate = "<a href='javascript:void(0)' class='confirmOrder' id='"
 					+ message.tid + "'>(确认)</a>" + "<a href='javascript:void(0)' class='refuseOrder' id='"
 					+ message.tid + "'>(拒绝)</a>";
 				break;
 			case 2:
-				message.inf = message.fromUserName + "拒绝您借阅" + message.bookName;
+				message.inf += "拒绝您借阅" + message.bookName;
 				message.operate = "";
 				break;
 			case 3:
-				message.inf = message.fromUserName + "同意您借阅" + message.bookName;
+				message.inf += "同意您借阅" + message.bookName;
 				message.operate = "";
 				break;
 			case 4:
-				message.inf = message.fromUserName + "确认您归还了" + message.bookName;
+				message.inf += "确认您归还了" + message.bookName;
 				message.operate = "(<a href='javascript:void(0)' class='readerComment' id='"
 					+ message.tid + "'>评论该书籍</a>)";
 				break;
 			case 5:
-				message.inf = message.fromUserName + "评论了您的" + message.bookName;
+				message.inf += "评论了您的" + message.bookName;
 				message.operate = "(<a href='javascript:void(0)' class='ownerComment' id='"
 					+ message.tid + "'>回复该评论</a>)";
 				break;
 				break;
 			case 6:
-				message.inf = message.fromUserName + "回复了您对" + message.bookName + "的评论";
+				message.inf += "回复了您对" + message.bookName + "的评论";
 				message.operate = "";
 				break;
 			default:
@@ -1045,6 +1059,10 @@ View.prototype.getPersonInf = function(data) {
 			table.fnAddData([ message.no, message.inf, message.cTime,
 					message.operate ]);		
 		}
+		$(".getUserInf").bind("click",function(){
+			var userID = $(this).attr("id");
+			MyApplication.Control.getUserInf(userID);
+		});
 		$(".confirmOrder").bind("click",function(){
 			var orderID = $(this).attr("id");
 			var message = {
@@ -1135,13 +1153,13 @@ View.prototype.getMyBooks = function(data) {
 				bookObject.visible = 'hidden';
 			}	
 			
-			var ava = bookObject.available
-					+ "<a href='javascript:void(0)' class='getTra' id='"
+			var ava = "<a href='javascript:void(0)' class='getTra' id='"
 					+ bookObject.bid + "' style=\"visibility:"
 					+ bookObject.visible + "\">(查看借阅状态)</a>";
+		 	//<a href='javascript:void(0)' class='changeBook' id='"+ bookObject.bid + "'>(修改书籍)</a>
 			table.fnAddData([ bookObject.no, bookObject.author,
 					bookObject.bookname, bookObject.publisher,
-					bookObject.shelfTime, ava ]);
+					bookObject.shelfTime,bookObject.available,ava]);
 		}
 		$(".getTra").bind("click", function() {
 			var bookID = $(this).attr("id");
@@ -1208,7 +1226,7 @@ View.prototype.getOrder = function(data) {
 			itemValue : reader.email
 		}, {
 			itemName : "手机",
-			itemValue : reader.mobile
+			itemValue : reader.contact.mobile
 		}, {
 			itemName : "应还时间",
 			itemValue : order.endTime
@@ -1234,6 +1252,47 @@ View.prototype.getOrder = function(data) {
 		MyApplication.loading();
 		var message = {
 			title : "查看借阅状态",
+			content : data.data.msg
+		};
+		MyApplication.View.genBox(message);
+	}
+};
+View.prototype.getUserInf = function(data) {
+	if (data.result == 0) {
+		MyApplication.loading();
+		var reader = data.data.user;
+		var ul = "<ul class='mylist'>";
+		var tpl = new Tpl(MyApplication.Tpl.listItem);
+		var args = [ {
+			itemName : "借书人",
+			itemValue : reader.nickname
+		}, {
+			itemName : "邮箱",
+			itemValue : reader.email
+		}, {
+			itemName : "手机",
+			itemValue : reader.contact.mobile
+		}];
+		for ( var i = 0; i < args.length; i++) {
+			var arg = args[i];
+			var item = tpl.initialize(arg);
+			ul += item;
+		}
+		ul += "</ul>";
+		var message = {
+			title : "消息提示",
+			content : ul,
+			isForm : false,
+			func : function() {
+			},
+			isConfirm : true,
+			buttons : [ "确认", "关闭" ]
+		};
+		MyApplication.View.genBox(message);
+	} else {
+		MyApplication.loading();
+		var message = {
+			title : "消息提示",
 			content : data.data.msg
 		};
 		MyApplication.View.genBox(message);
