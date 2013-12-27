@@ -260,7 +260,7 @@ transaction_service.newestTran = function(bid, callback) {
 	db.collection('orders', function(err, collection) {
 		if (err)
 			return callback(err);
-		collection.findOne({bid: bid, status: {$gte: 2}}, function(err, order) {
+		collection.findOne({bid: bid, status: 2}, function(err, order) {
 			if (err)
 				return callback(err);
 			callback(null, order);
