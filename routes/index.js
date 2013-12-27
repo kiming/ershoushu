@@ -337,7 +337,7 @@ module.exports = function(app) {
                             var ownerId = book.owner;
                             var bookname = book.bookname;
                             //查找借阅人的名字
-                            User.getUser(req.session.user.uid,function(err,owner){
+                            User.getUserSafe(req.session.user.uid,function(err,owner){
                                 if(!err){
                                     var messageE = {
                                         //mid自动生成
@@ -347,9 +347,9 @@ module.exports = function(app) {
                                         bookId : bid,
                                         tid : transaction.tid,
                                         //cTime 自动生成
-                                        fromUserName: owner.nickname,
-                                        bookName : bookname
-                                    }
+                                        ownerName: owner.nickname,
+                                        bookname : bookname
+                                    };
                                     var message = new Message(messageE);
                                     message.save(function(err){
                                         if(!err){
@@ -550,7 +550,7 @@ module.exports = function(app) {
             Book.getBook(tran.bid, function(err, book) {
                 if (err)
                     return res.end(JSON.stringify({result: 0, data: {err: 43, msg: '没有输入评论'}}));
-                User.getUser(book.owner, function(err, owner) {
+                User.getUserSafe(book.owner, function(err, owner) {
                     if (err)
                         return res.end(JSON.stringify({result: 0, data: {err: 44, msg: '没有输入评论'}}));
                     var message = new Message({

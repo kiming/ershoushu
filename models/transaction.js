@@ -63,7 +63,7 @@ Transaction.ConfirmTransaction = function(uid, tid, callback) {
 				Book.occupyBook(tran.bid, function(err, flag3) {
 					if (err)
 						return callback(err);
-					User.getUser(uid, function(err, user) {
+					User.getUserSafe(uid, function(err, user) {
 						if (err)
 							return callback(err);
 						var message = new Message({
