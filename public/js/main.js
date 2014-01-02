@@ -195,6 +195,7 @@ var MyApplication = {
 		showComments:"/book/comment",
 		confirmMessages:"/markread",
 		getUserInf:"/get/user",
+		download: "/res/mycloudlibrary.apk",
 	},
 	Login : false, // 登陆标示符
 	Timeout : null, // 轮询函数指针
@@ -693,6 +694,9 @@ View.prototype.initialize = function() { // 页面初始化
 	MyApplication.Control.getMessage(true);
 	$(".index").click(function() {
 		MyApplication.View.jump(MyApplication.Urls.home);
+	});
+	$(".dld").click(function() {
+		MyApplication.View.jump(MyApplication.Urls.download);
 	});
 	$(".searchBookBut").click(function() {
 		MyApplication.Control.searchBooks();
