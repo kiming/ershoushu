@@ -2,7 +2,7 @@
 var Book = require('../models/book');
 var Message = require('../models/message');
 
-var Transaction = require('../models/transaction')
+var Transaction = require('../models/transaction');
 var file_service = require('../services/file_service');
 var init_service = require('../services/init_service');
 
